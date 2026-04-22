@@ -1,6 +1,6 @@
 server:
   port: ${PORT:8080}
-
+# http://localhost:8080/doc.html
 logging:
   level:
     root: info
@@ -66,3 +66,7 @@ langchain4j:
       dimension: 1536
       use-index: false
       index-list-size: 100
+
+app:
+  knowledge:
+    upload-dir: ${KNOWLEDGE_UPLOAD_DIR:/tmp/ai_knowledge_uploads}

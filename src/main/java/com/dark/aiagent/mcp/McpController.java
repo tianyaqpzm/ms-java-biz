@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,13 +14,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-
 import com.dark.aiagent.mcp.McpProtocol.JsonRpcRequest;
 import com.dark.aiagent.mcp.McpProtocol.JsonRpcResponse;
 import com.dark.aiagent.mcp.McpProtocol.ToolDefinition;
 import com.dark.aiagent.mcp.McpProtocol.ToolResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -30,17 +27,17 @@ import lombok.extern.slf4j.Slf4j;
 public class McpController {
 
     private final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
-    private final ObjectMapper objectMapper;
+    // private final ObjectMapper objectMapper;
 
     // 🔥 核心：自动注入所有实现了 McpTool 接口的 Bean
     // 这就是一个动态的 "ToolRegistry"
     private final Map<String, McpTool> toolRegistry;
 
     public McpController(ObjectMapper objectMapper, List<McpTool> tools) {
-        this.objectMapper = objectMapper;
+        // this.objectMapper = objectMapper;
         // 将 List 转为 Map，方便按名字查找 (Key=toolName, Value=ToolInstance)
-        this.toolRegistry = tools.stream()
-                .collect(Collectors.toMap(McpTool::getName, tool -> tool));
+        this.toolRegistry =
+                tools.stream().collect(Collectors.toMap(McpTool::getName, tool -> tool));
 
         log.info("MCP Server 已启动, 加载了 {} 个工具: {}", toolRegistry.size(), toolRegistry.keySet());
     }
@@ -115,9 +112,7 @@ public class McpController {
     // --- 内部处理逻辑 ---
 
     private Map<String, Object> handleInitialize() {
-        return Map.of(
-                "protocolVersion", "2024-11-05",
-                "capabilities", Map.of("tools", Map.of()),
+        return Map.of("protocolVersion", "2024-11-05", "capabilities", Map.of("tools", Map.of()),
                 "serverInfo", Map.of("name", "ProductionJavaMcp", "version", "2.0"));
     }
 
