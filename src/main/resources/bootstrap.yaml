@@ -13,6 +13,7 @@ spring:
       config:
         namespace: ${NACOS_NAMESPACE}
         file-extension: yaml
+        timeout: 5000
         # 可选: 共享配置
         # shared-configs:
         #   - data-id: common.yaml
@@ -20,3 +21,4 @@ spring:
       # --- 服务发现 ---
       discovery:
         namespace: ${NACOS_NAMESPACE}
+        timeout: 5000

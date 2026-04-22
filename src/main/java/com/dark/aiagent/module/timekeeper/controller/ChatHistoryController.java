@@ -30,4 +30,9 @@ public class ChatHistoryController {
                         .eq(ChatMessage::getSessionId, sessionId)
                         .orderByAsc(ChatMessage::getCreatedAt)));
     }
+
+    @GetMapping("/sessions")
+    public ResponseEntity<List<com.dark.aiagent.module.timekeeper.entity.ChatSessionDto>> getSessions() {
+        return ResponseEntity.ok(chatMessageMapper.getSessions());
+    }
 }
