@@ -1,34 +1,33 @@
 package com.dark.aiagent.module.knowledge.controller;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import java.util.List;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-
 import com.dark.aiagent.module.knowledge.entity.KnowledgeTopic;
-import com.dark.aiagent.module.knowledge.service.KnowledgeTopicService;
 import com.dark.aiagent.module.knowledge.service.KnowledgeDocumentService;
+import com.dark.aiagent.module.knowledge.service.KnowledgeTopicService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * 知识库 API 测试：CRUD + 级联逻辑
- * 使用 @SpringBootTest + MockBean 隔离底层数据库
+ * 知识库 API 测试：CRUD + 级联逻辑 使用 @WebMvcTest 仅加载 Web 层并通过 MockBean 隔离底层 Service
  */
-@SpringBootTest
+@WebMvcTest(KnowledgeController.class)
 @ActiveProfiles("test")
-@AutoConfigureMockMvc
 class KnowledgeControllerTest {
 
     @Autowired
@@ -53,8 +52,7 @@ class KnowledgeControllerTest {
 
         when(topicService.list()).thenReturn(List.of(topic));
 
-        mockMvc.perform(get("/rest/dark/v1/knowledge/topics"))
-                .andExpect(status().isOk())
+        mockMvc.perform(get("/rest/dark/v1/knowledge/topics")).andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value("测试主题"));
     }
 
@@ -65,11 +63,10 @@ class KnowledgeControllerTest {
         KnowledgeTopic topic = new KnowledgeTopic();
         topic.setName("新架构文档");
 
-        mockMvc.perform(post("/rest/dark/v1/knowledge/topics")
-                        .contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(
+                post("/rest/dark/v1/knowledge/topics").contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(topic)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").exists())
+                .andExpect(status().isOk()).andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.name").value("新架构文档"));
 
         verify(topicService, times(1)).save(any());
