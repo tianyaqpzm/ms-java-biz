@@ -1,20 +1,14 @@
 package com.dark.aiagent.mcp;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
-
 import java.util.List;
-import java.util.Map;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-
 import com.dark.aiagent.mcp.McpProtocol.JsonRpcRequest;
 import com.dark.aiagent.mcp.McpProtocol.ToolResult;
 import com.dark.aiagent.mcp.tools.OrderQueryTool;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -95,8 +89,7 @@ class McpControllerTest {
     @Test
     @DisplayName("LM-06: notifications/initialized 不产生响应")
     void notificationsShouldBeSilent() {
-        JsonRpcRequest request = new JsonRpcRequest("2.0", null,
-                "notifications/initialized", null);
+        JsonRpcRequest request = new JsonRpcRequest("2.0", null, "notifications/initialized", null);
         // 验证 method = notifications/initialized 且 id 为 null (通知不需要响应)
         assertThat(request.id()).isNull();
         assertThat(request.method()).isEqualTo("notifications/initialized");

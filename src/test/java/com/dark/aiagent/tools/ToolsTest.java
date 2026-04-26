@@ -12,6 +12,7 @@ import com.dark.aiagent.assistant.SeparateChatAssistant;
  * @date 2025/5/13 11:22
  */
 @SpringBootTest
+@org.springframework.test.context.ActiveProfiles("test")
 public class ToolsTest {
 
     @Autowired

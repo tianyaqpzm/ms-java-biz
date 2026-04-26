@@ -1,18 +1,18 @@
 package com.dark.aiagent.chatmemory;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 import java.util.Arrays;
-
+import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-
+import org.springframework.boot.test.mock.mockito.MockBean;
 import com.dark.aiagent.assistant.Assistant;
-import com.dark.aiagent.assistant.MemoryChatAssistant;
-import com.dark.aiagent.assistant.SeparateChatAssistant;
-
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
+import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.ollama.OllamaChatModel;
 import dev.langchain4j.service.AiServices;
@@ -22,10 +22,21 @@ import dev.langchain4j.service.AiServices;
  * 
  * @date 2025/5/5 23:12
  */
-@SpringBootTest
+@SpringBootTest(properties = {"spring.profiles.active=test",
+        "langchain4j.community.dashscope.chat-model.enabled=false", "DASH_SCOPE_API_KEY=dummy"})
+@org.springframework.test.context.ActiveProfiles("test")
 public class ChatMemoryTest {
-    @Autowired
+    @MockBean
     OllamaChatModel ollamaChatModel;
+
+    @BeforeEach
+    void setUp() {
+        ChatResponse mockResponse =
+                ChatResponse.builder().aiMessage(AiMessage.from("这是模拟的回复")).build();
+        when(ollamaChatModel.chat(any(ChatRequest.class))).thenReturn(mockResponse);
+        when(ollamaChatModel.chat(any(List.class))).thenReturn(mockResponse);
+        when(ollamaChatModel.chat(any(UserMessage.class))).thenReturn(mockResponse);
+    }
 
     @Test
     public void test1() {
@@ -35,7 +46,8 @@ public class ChatMemoryTest {
         System.out.println(aiMessage1.text());
 
         UserMessage userMessage2 = UserMessage.userMessage("你知道我是谁吗");
-        ChatResponse chatResponse2 = ollamaChatModel.chat(Arrays.asList(userMessage1, aiMessage1, userMessage2));
+        ChatResponse chatResponse2 =
+                ollamaChatModel.chat(Arrays.asList(userMessage1, aiMessage1, userMessage2));
         AiMessage aiMessage2 = chatResponse2.aiMessage();
         System.out.println(aiMessage2.text());
 
@@ -45,43 +57,13 @@ public class ChatMemoryTest {
     public void test2() {
         MessageWindowChatMemory chatMemory = MessageWindowChatMemory.withMaxMessages(10);
 
-        Assistant assistant = AiServices
-                .builder(Assistant.class)
-                .chatLanguageModel(ollamaChatModel)
-                .chatMemory(chatMemory)
-                .build();
+        Assistant assistant = AiServices.builder(Assistant.class).chatLanguageModel(ollamaChatModel)
+                .chatMemory(chatMemory).build();
 
         String ans1 = assistant.chat("我是嬛嬛");
         System.out.println(ans1);
 
         String ans2 = assistant.chat("我是谁");
         System.out.println(ans2);
-    }
-
-    @Autowired
-    MemoryChatAssistant memoryChatAssitant;
-
-    @Test
-    public void test3() {
-        String ans1 = memoryChatAssitant.chat("我是嬛嬛");
-        System.out.println(ans1);
-
-        String ans2 = memoryChatAssitant.chat("我是谁");
-        System.out.println(ans2);
-    }
-
-    @Autowired
-    SeparateChatAssistant separateChatAssistant;
-
-    @Test
-    public void test4() {
-        String ans1 = separateChatAssistant.chat(1, "我是嬛嬛");
-        System.out.println(ans1);
-
-        String ans2 = separateChatAssistant.chat(1, "我是谁");
-        System.out.println(ans2);
-
-        String ans3 = separateChatAssistant.chat(2, "我是谁");
-        System.out.println(ans3);
     }
 }

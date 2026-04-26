@@ -13,6 +13,7 @@ spring:
       enabled: false
   cloud:
     nacos:
+      server-addr: 127.0.0.1:80
       discovery:
         enabled: false
       config:
@@ -23,10 +24,18 @@ langchain4j:
   open-ai:
     chat-model:
       enabled: false
+    embedding-model:
+      enabled: false
   ollama:
     chat-model:
       enabled: false
-
+  community:
+    dashscope:
+      chat-model:
+        enabled: false
+        api-key: mock_value
+        # 有效期至 2025-10-26 (tianyaqpzm)
+        model-name: qwen-plus-2025-04-28
 logging:
   level:
     root: WARN

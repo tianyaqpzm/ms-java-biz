@@ -17,6 +17,7 @@ import com.dark.aiagent.bean.ChatMessages;
  */
 
 @SpringBootTest
+@org.springframework.test.context.ActiveProfiles("test")
 public class CurdTest {
 
     @Autowired

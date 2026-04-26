@@ -1,25 +1,31 @@
 package com.dark.aiagent.module.knowledge.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.dark.aiagent.module.knowledge.entity.KnowledgeTopic;
-import com.dark.aiagent.module.knowledge.entity.KnowledgeDocument;
-import com.dark.aiagent.module.knowledge.service.KnowledgeTopicService;
-import com.dark.aiagent.module.knowledge.service.KnowledgeDocumentService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.dark.aiagent.module.knowledge.entity.KnowledgeDocument;
+import com.dark.aiagent.module.knowledge.entity.KnowledgeTopic;
+import com.dark.aiagent.module.knowledge.service.KnowledgeDocumentService;
+import com.dark.aiagent.module.knowledge.service.KnowledgeTopicService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "知识库控制台")
 @RestController
@@ -50,7 +56,8 @@ public class KnowledgeController {
 
     @Operation(summary = "更新主题")
     @PutMapping("/topics/{id}")
-    public KnowledgeTopic updateTopic(@PathVariable("id") String id, @RequestBody KnowledgeTopic topic) {
+    public KnowledgeTopic updateTopic(@PathVariable("id") String id,
+            @RequestBody KnowledgeTopic topic) {
         topic.setId(id);
         topicService.updateById(topic);
         return topic;
@@ -89,7 +96,8 @@ public class KnowledgeController {
 
     @Operation(summary = "下发分块策略与入库")
     @PostMapping("/documents/{id}/ingest")
-    public Map<String, Object> ingestDocument(@PathVariable("id") String id, @RequestBody Map<String, Object> payload) {
+    public Map<String, Object> ingestDocument(@PathVariable("id") String id,
+            @RequestBody Map<String, Object> payload) {
         return documentService.initiateIngest(id, payload);
     }
 
@@ -103,9 +111,9 @@ public class KnowledgeController {
             if (mimeType == null) {
                 mimeType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
             }
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(mimeType))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"")
+            return ResponseEntity.ok().contentType(MediaType.parseMediaType(mimeType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            "inline; filename=\"" + resource.getFilename() + "\"")
                     .body(resource);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
