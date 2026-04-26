@@ -29,9 +29,19 @@ trigger: always_on
    - 使用 **MyBatis-Plus**。对于 PostgreSQL 的 `JSONB` 字段（用于存储动态数据），必须配置 `JacksonTypeHandler` 进行自动映射。
    - 使用 **LangChain4j** 的 Embedding Store 接口进行向量搜索操作。
 
-4. **系统边界约束**:
+4. **代码可读性与规范 (Code Readability)**:
+   - **禁止全路径引用**: 除非存在类名冲突，否则严禁在代码中直接使用全路径引用类（如 `dev.langchain4j.model.chat.ChatLanguageModel`）。必须通过 `import` 语句引入类，保持代码简洁。
+   - **导入优化**: 定期清理无用的 import，避免使用通配符导入（`import .*`）。
+
+5. **系统边界约束**:
    - 本服务充当系统的“手脚” (Hands)。它只负责执行 Python Agent 请求的具体任务。
    - **不要**在这里实现对话状态管理或复杂的 Agent 编排逻辑。
+
+6. **测试规范 (Testing Standards)**:
+   - **基础设施 Mock**: 禁止在单元测试/集成测试中直连 MongoDB。必须通过 `@TestConfiguration` 提供 Mock 的 `MongoTemplate` 豆 (Bean)，并 Mock `getConverter()` 以满足 Spring Data Repositories 的加载。
+   - **依赖冲突防护**: 由于同时引用了 Spring Cloud Alibaba 和 LangChain4j BOM，当发现 `NoSuchMethodError` 时，必须通过 `mvn dependency:tree` 检查版本，并在 `pom.xml` 中显式指定高版本 SDK（通常是 DashScope SDK）。
+   - **Context 优化**: 在 `application-test.yml` 中应排除不必要的自动配置（如 `MongoAutoConfiguration`），加快启动速度并减少环境依赖。
+   - **切片测试 (Slice Testing)**: 针对 Controller 层测试，优先使用 `@WebMvcTest` 而非 `@SpringBootTest`。这可以避免加载不必要的业务配置类和基础设施 Bean，确保测试的精确性与高性能。
 
 # Key Context (关键背景)
 这是一个 MCP Server。它连接 Nacos 进行服务注册。它提供具体的业务工具（如 `query_order` 查订单, `search_knowledge` 查知识库），并通过 SSE 供 Python Agent 远程调用。
