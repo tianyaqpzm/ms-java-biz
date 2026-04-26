@@ -1,29 +1,31 @@
 package com.dark.aiagent.module.knowledge.service.impl;
 
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.dark.aiagent.module.knowledge.entity.KnowledgeDocument;
-import com.dark.aiagent.module.knowledge.entity.KnowledgeConfig;
-import com.dark.aiagent.module.knowledge.mapper.KnowledgeDocumentMapper;
-import com.dark.aiagent.module.knowledge.service.KnowledgeDocumentService;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
-import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.dark.aiagent.module.knowledge.entity.KnowledgeConfig;
+import com.dark.aiagent.module.knowledge.entity.KnowledgeDocument;
+import com.dark.aiagent.module.knowledge.mapper.KnowledgeDocumentMapper;
+import com.dark.aiagent.module.knowledge.service.KnowledgeDocumentService;
 
 @Service
-public class KnowledgeDocumentServiceImpl extends ServiceImpl<KnowledgeDocumentMapper, KnowledgeDocument> implements KnowledgeDocumentService {
-    
+public class KnowledgeDocumentServiceImpl
+        extends ServiceImpl<KnowledgeDocumentMapper, KnowledgeDocument>
+        implements KnowledgeDocumentService {
+
     @Value("${app.knowledge.upload-dir:/tmp/ai_knowledge_uploads}")
     private String uploadDir;
-    
+
     @Autowired
     private RestTemplate restTemplate;
 
@@ -43,7 +45,7 @@ public class KnowledgeDocumentServiceImpl extends ServiceImpl<KnowledgeDocumentM
         if (originalFilename != null && originalFilename.contains(".")) {
             extension = originalFilename.substring(originalFilename.lastIndexOf("."));
         }
-        
+
         String uniqueFileName = UUID.randomUUID().toString() + extension;
         File destFile = new File(dir, uniqueFileName);
 
@@ -60,7 +62,7 @@ public class KnowledgeDocumentServiceImpl extends ServiceImpl<KnowledgeDocumentM
         doc.setStatus("未处理");
         doc.setAuthor("Admin"); // default author, could be fetched from JWT
         doc.setFilePath(destFile.getAbsolutePath());
-        
+
         this.save(doc);
         return doc;
     }
@@ -93,33 +95,44 @@ public class KnowledgeDocumentServiceImpl extends ServiceImpl<KnowledgeDocumentM
     }
 
     @Override
-    public Map<String, Object> initiateIngest(String documentId, Map<String, Object> ingestPayload) {
+    public Map<String, Object> initiateIngest(String documentId,
+            Map<String, Object> ingestPayload) {
         KnowledgeDocument doc = this.getById(documentId);
         if (doc == null) {
             throw new RuntimeException("Document not found");
         }
-        
+
         // Save config
         KnowledgeConfig config = new KnowledgeConfig();
-        if (ingestPayload.containsKey("chunkSize")) config.setChunkSize((Integer) ingestPayload.get("chunkSize"));
-        if (ingestPayload.containsKey("chunkOverlap")) config.setChunkOverlap((Integer) ingestPayload.get("chunkOverlap"));
+        if (ingestPayload.containsKey("chunkSize"))
+            config.setChunkSize((Integer) ingestPayload.get("chunkSize"));
+        if (ingestPayload.containsKey("chunkOverlap"))
+            config.setChunkOverlap((Integer) ingestPayload.get("chunkOverlap"));
         // TODO: Map other properties if needed
         doc.setConfigJson(config);
         doc.setStatus("进行中");
         this.updateById(doc);
-        
+
         // Prepare Request for Python Agent
         Map<String, Object> pythonReq = new HashMap<>();
-        pythonReq.put("file_path", doc.getFilePath() != null ? doc.getFilePath() : "mock/path.txt"); // Provide a mock path if null
+        pythonReq.put("file_path", doc.getFilePath() != null ? doc.getFilePath() : "mock/path.txt"); // Provide
+                                                                                                     // a
+                                                                                                     // mock
+                                                                                                     // path
+                                                                                                     // if
+                                                                                                     // null
         pythonReq.put("category", doc.getTopicId());
         pythonReq.put("tenant_id", "default");
-        if (config.getChunkSize() != null) pythonReq.put("chunk_size", config.getChunkSize());
-        if (config.getChunkOverlap() != null) pythonReq.put("chunk_overlap", config.getChunkOverlap());
-        
+        if (config.getChunkSize() != null)
+            pythonReq.put("chunk_size", config.getChunkSize());
+        if (config.getChunkOverlap() != null)
+            pythonReq.put("chunk_overlap", config.getChunkOverlap());
+
         // Call Python Agent (assuming it's at localhost:8181 or dynamically resolved)
         String pythonUrl = "http://localhost:8181/rest/kb/v1/documents/ingest";
         try {
-            Map<String, Object> response = restTemplate.postForObject(pythonUrl, pythonReq, Map.class);
+            Map<String, Object> response =
+                    restTemplate.postForObject(pythonUrl, pythonReq, Map.class);
             doc.setStatus("已完成");
             this.updateById(doc);
             return response;

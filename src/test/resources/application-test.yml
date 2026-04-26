@@ -1,0 +1,49 @@
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration
+      - org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.mongo.MongoRepositoriesAutoConfiguration
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  flyway:
+    enabled: false
+  data:
+    mongodb:
+      # uri: mongodb://localhost:27017/test
+    redis:
+      enabled: false
+  cloud:
+    nacos:
+      server-addr: 127.0.0.1:80
+      discovery:
+        enabled: false
+      config:
+        enabled: false
+
+# 禁用 LangChain4j 自动连接
+langchain4j:
+  open-ai:
+    chat-model:
+      enabled: false
+    embedding-model:
+      enabled: false
+  ollama:
+    chat-model:
+      enabled: false
+  community:
+    dashscope:
+      chat-model:
+        enabled: false
+        api-key: mock_value
+        # 有效期至 2025-10-26 (tianyaqpzm)
+        model-name: qwen-plus-2025-04-28
+logging:
+  level:
+    root: WARN
+    com.dark.aiagent: DEBUG
