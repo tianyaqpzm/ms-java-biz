@@ -68,8 +68,7 @@ jobs:
           context: .
           file: ./Dockerfile
           platforms: linux/amd64,linux/arm64  # 多架构支持
-          push: ${{ github.event_name != 'pull_request' }}  # PR时不推送
-          # push: true  # 允许在PR时也推送镜像，配合上方 tags: type=ref,event=pr 使用
+          push: true  # 允许在PR时也推送镜像，配合上方 tags: type=ref,event=pr 使用
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
@@ -79,7 +78,9 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master' # 仅在 master 推送时部署，PR 不部署
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/master') ||
+      (github.event_name == 'pull_request' && github.base_ref == 'master' && startsWith(github.head_ref, 'feature_'))
     steps:
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v1.0.3
@@ -93,8 +94,9 @@ jobs:
             docker stop ms-java-biz || true
             docker rm ms-java-biz || true
             
-            # 拉取最新镜像 (假设 master 分支对应 master tag)
-            docker pull tianyaqpzm/ms-java-biz:master
+            # 拉取最新镜像
+            IMAGE_TAG=${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || 'master' }}
+            docker pull tianyaqpzm/ms-java-biz:${IMAGE_TAG}
             # 需提前创建docker内部网络: pei-network
             # host-gateway 是 Docker 的魔法词，自动指向宿主机内网 IP
             # 启动新容器
@@ -109,7 +111,7 @@ jobs:
               -e NACOS_NAMESPACE=${{ vars.NACOS_NAMESPACE }} \
               -e NACOS_USERNAME=${{ secrets.NACOS_USERNAME }} \
               -e NACOS_PASSWORD=${{ secrets.NACOS_PASSWORD }} \
-              tianyaqpzm/ms-java-biz:master
+              tianyaqpzm/ms-java-biz:${IMAGE_TAG}
             
             # 清理无用镜像
-            docker image prune -f
+            docker image prune -af

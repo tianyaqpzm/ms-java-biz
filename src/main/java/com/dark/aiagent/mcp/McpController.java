@@ -85,7 +85,7 @@ public class McpController {
 
         try {
             Object result = null;
-            log.debug("收到指令: {} [{}]", request.method(), sessionId);
+            log.info("收到指令: {} [{}]", request.method(), sessionId);
 
             switch (request.method()) {
                 case "initialize" -> result = handleInitialize();
