@@ -5,6 +5,12 @@ logging:
   level:
     root: info
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: 'health'
+
 # 以下配置可被 Nacos 配置中心覆盖
 # Nacos Data ID: ms-java-biz-prod.yaml (或根据 profile 变化)
 
@@ -68,5 +74,15 @@ langchain4j:
       index-list-size: 100
 
 app:
+  jwt:
+    secret: ${JWT_SECRET:your-256-bit-secret-your-256-bit-secret}
+  security:
+    ignore:
+      urls:
+        - /health
+        - /actuator/health
+        - /doc.html
+        - /webjars/**
+        - /v3/api-docs/**
   knowledge:
     upload-dir: ${KNOWLEDGE_UPLOAD_DIR:/tmp/ai_knowledge_uploads}
