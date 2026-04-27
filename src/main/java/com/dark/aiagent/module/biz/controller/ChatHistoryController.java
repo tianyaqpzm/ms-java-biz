@@ -1,4 +1,4 @@
-package com.dark.aiagent.module.timekeeper.controller;
+package com.dark.aiagent.module.biz.controller;
 
 import java.util.List;
 
@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.dark.aiagent.module.timekeeper.entity.ChatMessage;
-import com.dark.aiagent.module.timekeeper.mapper.ChatMessageMapper;
+import com.dark.aiagent.module.biz.entity.ChatMessage;
+import com.dark.aiagent.module.biz.mapper.ChatMessageMapper;
 
 import lombok.RequiredArgsConstructor;
 
@@ -32,7 +32,7 @@ public class ChatHistoryController {
     }
 
     @GetMapping("/sessions")
-    public ResponseEntity<List<com.dark.aiagent.module.timekeeper.entity.ChatSessionDto>> getSessions() {
+    public ResponseEntity<List<com.dark.aiagent.module.biz.entity.ChatSessionDto>> getSessions() {
         return ResponseEntity.ok(chatMessageMapper.getSessions());
     }
 }

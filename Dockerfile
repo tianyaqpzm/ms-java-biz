@@ -28,7 +28,7 @@ WORKDIR /app
 RUN groupadd -r appgroup && useradd -r -g appgroup appuser
 
 # 2. 从构建阶段复制 jar 包
-COPY --from=build /app/target/ai-langchain4j*.jar /app/ai-langchain4j.jar
+COPY --from=build /app/target/ms-java-biz*.jar /app/ms-java-biz.jar
 
 # 3. 复制并设置 entrypoint.sh
 COPY entrypoint.sh /app/entrypoint.sh
@@ -57,4 +57,4 @@ USER appuser
 ENTRYPOINT ["/app/entrypoint.sh"]
 
 # CMD 作为参数传给 ENTRYPOINT 中的 "$@"
-CMD ["sh", "-c", "java $JAVA_OPTS -jar /app/ai-langchain4j.jar"]
+CMD ["sh", "-c", "java $JAVA_OPTS -jar /app/ms-java-biz.jar"]

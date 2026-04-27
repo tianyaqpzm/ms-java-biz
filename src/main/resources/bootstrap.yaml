@@ -1,6 +1,6 @@
 spring:
   application:
-    name: ai-langchain4j
+    name: ms-java-biz
   profiles:
     active: ${ENV_TYPE:prod}
   cloud:

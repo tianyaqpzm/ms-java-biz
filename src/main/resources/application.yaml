@@ -6,7 +6,7 @@ logging:
     root: info
 
 # 以下配置可被 Nacos 配置中心覆盖
-# Nacos Data ID: ai-langchain4j-prod.yaml (或根据 profile 变化)
+# Nacos Data ID: ms-java-biz-prod.yaml (或根据 profile 变化)
 
 spring:
   # MongoDB - 将在 Nacos 配置中心配置

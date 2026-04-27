@@ -1,12 +1,12 @@
-package com.dark.aiagent.module.timekeeper.service;
+package com.dark.aiagent.module.biz.service;
 
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
-import com.dark.aiagent.module.timekeeper.entity.TimeLimitedEvent;
-import com.dark.aiagent.module.timekeeper.repository.TimeLimitedEventRepository;
+import com.dark.aiagent.module.biz.entity.TimeLimitedEvent;
+import com.dark.aiagent.module.biz.repository.TimeLimitedEventRepository;
 
 import lombok.RequiredArgsConstructor;
 

@@ -1,12 +1,12 @@
-package com.dark.aiagent.module.timekeeper.mapper;
+package com.dark.aiagent.module.biz.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 import java.util.List;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.dark.aiagent.module.timekeeper.entity.ChatMessage;
-import com.dark.aiagent.module.timekeeper.entity.ChatSessionDto;
+import com.dark.aiagent.module.biz.entity.ChatMessage;
+import com.dark.aiagent.module.biz.entity.ChatSessionDto;
 
 @Mapper
 public interface ChatMessageMapper extends BaseMapper<ChatMessage> {

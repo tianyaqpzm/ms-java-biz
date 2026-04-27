@@ -34,7 +34,8 @@ trigger: always_on
    - **导入优化**: 定期清理无用的 import，避免使用通配符导入（`import .*`）。
 
 5. **系统边界约束**:
-   - 本服务充当系统的“手脚” (Hands)。它只负责执行 Python Agent 请求的具体任务。
+   - 本服务 (`ms-java-biz`) 处理企业核心业务逻辑与数据持久化。
+   - 将底层业务能力封装为 MCP (Model Context Protocol) 标准接口，作为工具集供 AI 智能层调用。
    - **不要**在这里实现对话状态管理或复杂的 Agent 编排逻辑。
 
 6. **测试规范 (Testing Standards)**:
@@ -43,5 +44,9 @@ trigger: always_on
    - **Context 优化**: 在 `application-test.yml` 中应排除不必要的自动配置（如 `MongoAutoConfiguration`），加快启动速度并减少环境依赖。
    - **切片测试 (Slice Testing)**: 针对 Controller 层测试，优先使用 `@WebMvcTest` 而非 `@SpringBootTest`。这可以避免加载不必要的业务配置类和基础设施 Bean，确保测试的精确性与高性能。
 
+7. **数据库迁移 (Flyway)**:
+   - **脚本不可变性**: 严禁修改已经应用（Applied）到数据库的 SQL 迁移脚本。任何变更必须通过新建版本号（如 `V1.2__...`）实现。
+   - **Checksum 修复**: 开发环境下若因修改旧脚本导致 `FlywayValidateException`，应使用 `FlywayMigrationStrategy` 调用 `repair()` 同步校验和。
+
 # Key Context (关键背景)
-这是一个 MCP Server。它连接 Nacos 进行服务注册。它提供具体的业务工具（如 `query_order` 查订单, `search_knowledge` 查知识库），并通过 SSE 供 Python Agent 远程调用。
+这是一个核心业务服务 (`ms-java-biz`)。它连接 Nacos 进行服务注册，提供具体的业务工具（如 `query_order` 查订单, `search_knowledge` 查知识库），并通过 MCP SSE 供 ms-py-agent 远程调用。

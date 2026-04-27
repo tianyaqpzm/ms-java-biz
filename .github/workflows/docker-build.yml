@@ -1,4 +1,4 @@
-name: Build APP DockerImage
+name: Build MS Java Biz DockerImage
 
 on:
   push:
@@ -54,8 +54,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            tianyaqpzm/ai-langchain4j
-            ghcr.io/${{ github.repository_owner }}/ai-langchain4j  # 可选
+            tianyaqpzm/ms-java-biz
+            ghcr.io/${{ github.repository_owner }}/ms-java-biz  # 可选
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -90,16 +90,16 @@ jobs:
           port: ${{ vars.PORT || 22 }}
           script: |
             # 停止并删除旧容器
-            docker stop ai-langchain4j || true
-            docker rm ai-langchain4j || true
+            docker stop ms-java-biz || true
+            docker rm ms-java-biz || true
             
             # 拉取最新镜像 (假设 master 分支对应 master tag)
-            docker pull tianyaqpzm/ai-langchain4j:master
+            docker pull tianyaqpzm/ms-java-biz:master
             # 需提前创建docker内部网络: pei-network
             # host-gateway 是 Docker 的魔法词，自动指向宿主机内网 IP
             # 启动新容器
             docker run -d \
-              --name ai-langchain4j \
+              --name ms-java-biz \
               --restart unless-stopped \
               --network pei-network \
               --expose 8080 \
@@ -109,7 +109,7 @@ jobs:
               -e NACOS_NAMESPACE=${{ vars.NACOS_NAMESPACE }} \
               -e NACOS_USERNAME=${{ secrets.NACOS_USERNAME }} \
               -e NACOS_PASSWORD=${{ secrets.NACOS_PASSWORD }} \
-              tianyaqpzm/ai-langchain4j:master
+              tianyaqpzm/ms-java-biz:master
             
             # 清理无用镜像
             docker image prune -f

@@ -1,6 +1,6 @@
 # Database Migration Scripts
 
-本目录用于管理 ai-langchain4j 项目的数据库版本迁移脚本。
+本目录用于管理 ms-java-biz 项目的数据库版本迁移脚本。
 
 ## 命名规范
 

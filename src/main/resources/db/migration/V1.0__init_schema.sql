@@ -1,5 +1,5 @@
 -- ============================================
--- AI-Langchain4j Database Migration
+-- ms-java-biz Database Migration
 -- Version: release_1.0
 -- Date: 2026-02-09
 -- Description: Initial schema setup

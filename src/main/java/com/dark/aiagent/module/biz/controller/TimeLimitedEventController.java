@@ -1,11 +1,11 @@
-package com.dark.aiagent.module.timekeeper.controller;
+package com.dark.aiagent.module.biz.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.dark.aiagent.module.timekeeper.entity.TimeLimitedEvent;
-import com.dark.aiagent.module.timekeeper.service.TimeLimitedEventService;
+import com.dark.aiagent.module.biz.entity.TimeLimitedEvent;
+import com.dark.aiagent.module.biz.service.TimeLimitedEventService;
 
 import java.util.List;
 

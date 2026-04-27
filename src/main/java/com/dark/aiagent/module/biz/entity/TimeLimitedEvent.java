@@ -1,4 +1,4 @@
-package com.dark.aiagent.module.timekeeper.entity;
+package com.dark.aiagent.module.biz.entity;
 
 import java.util.Date;
 

@@ -113,7 +113,7 @@ public class KnowledgeDocumentServiceImpl
         doc.setStatus("进行中");
         this.updateById(doc);
 
-        // Prepare Request for Python Agent
+        // Prepare Request for ms-py-agent
         Map<String, Object> pythonReq = new HashMap<>();
         pythonReq.put("file_path", doc.getFilePath() != null ? doc.getFilePath() : "mock/path.txt"); // Provide
                                                                                                      // a
@@ -128,7 +128,7 @@ public class KnowledgeDocumentServiceImpl
         if (config.getChunkOverlap() != null)
             pythonReq.put("chunk_overlap", config.getChunkOverlap());
 
-        // Call Python Agent (assuming it's at localhost:8181 or dynamically resolved)
+        // Call ms-py-agent (assuming it's at localhost:8181 or dynamically resolved)
         String pythonUrl = "http://localhost:8181/rest/kb/v1/documents/ingest";
         try {
             Map<String, Object> response =
@@ -139,7 +139,7 @@ public class KnowledgeDocumentServiceImpl
         } catch (Exception e) {
             doc.setStatus("处理失败");
             this.updateById(doc);
-            throw new RuntimeException("Failed to call Python Agent: " + e.getMessage());
+            throw new RuntimeException("Failed to call ms-py-agent: " + e.getMessage());
         }
     }
 }

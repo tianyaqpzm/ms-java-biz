@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.zhuchl</groupId>
-    <artifactId>ai-langchain4j</artifactId>
+    <artifactId>ms-java-biz</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>ai-langchain4j</name>
-    <description>ai-langchain4j</description>
+    <name>ms-java-biz</name>
+    <description>ms-java-biz</description>
     <url/>
     <licenses>
         <license/>
