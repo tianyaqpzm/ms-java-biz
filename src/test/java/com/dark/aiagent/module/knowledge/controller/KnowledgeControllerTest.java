@@ -18,15 +18,19 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import com.dark.aiagent.module.knowledge.entity.KnowledgeTopic;
-import com.dark.aiagent.module.knowledge.service.KnowledgeDocumentService;
-import com.dark.aiagent.module.knowledge.service.KnowledgeTopicService;
+import com.dark.aiagent.domain.knowledge.entity.KnowledgeTopic;
+import com.dark.aiagent.domain.knowledge.repository.KnowledgeTopicRepository;
+import com.dark.aiagent.application.knowledge.service.KnowledgeDocumentApplicationService;
+import com.dark.aiagent.interfaces.knowledge.controller.KnowledgeController;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 
 /**
  * 知识库 API 测试：CRUD + 级联逻辑 使用 @WebMvcTest 仅加载 Web 层并通过 MockBean 隔离底层 Service
  */
 @WebMvcTest(KnowledgeController.class)
+@AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
 class KnowledgeControllerTest {
 
@@ -34,10 +38,10 @@ class KnowledgeControllerTest {
     private MockMvc mockMvc;
 
     @MockBean
-    private KnowledgeTopicService topicService;
+    private KnowledgeTopicRepository topicRepository;
 
     @MockBean
-    private KnowledgeDocumentService documentService;
+    private KnowledgeDocumentApplicationService documentService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -46,11 +50,12 @@ class KnowledgeControllerTest {
     @Test
     @DisplayName("LK-01: 获取所有主题列表")
     void shouldReturnTopicList() throws Exception {
-        KnowledgeTopic topic = new KnowledgeTopic();
-        topic.setId("1");
-        topic.setName("测试主题");
+        KnowledgeTopic topic = KnowledgeTopic.builder()
+                .id("1")
+                .name("测试主题")
+                .build();
 
-        when(topicService.list()).thenReturn(List.of(topic));
+        when(topicRepository.findAll()).thenReturn(List.of(topic));
 
         mockMvc.perform(get("/rest/dark/v1/knowledge/topics")).andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value("测试主题"));
@@ -60,8 +65,9 @@ class KnowledgeControllerTest {
     @Test
     @DisplayName("LK-02: 成功创建新主题")
     void shouldCreateTopic() throws Exception {
-        KnowledgeTopic topic = new KnowledgeTopic();
-        topic.setName("新架构文档");
+        KnowledgeTopic topic = KnowledgeTopic.builder()
+                .name("新架构文档")
+                .build();
 
         mockMvc.perform(
                 post("/rest/dark/v1/knowledge/topics").contentType(MediaType.APPLICATION_JSON)
@@ -69,7 +75,7 @@ class KnowledgeControllerTest {
                 .andExpect(status().isOk()).andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.name").value("新架构文档"));
 
-        verify(topicService, times(1)).save(any());
+        verify(topicRepository, times(1)).save(any());
     }
 
     // LK-03: DELETE /topics/{id} -> 级联清理
@@ -82,8 +88,7 @@ class KnowledgeControllerTest {
                 .andExpect(status().isOk());
 
 
-        verify(topicService).removeById(topicId);
-        // 验证 documentService 也被调用了清理逻辑 (MyBatis-Plus 的 remove 方法)
-        verify(documentService).remove(any());
+        verify(topicRepository).deleteById(topicId);
+        verify(documentService).getDocumentsByTopic(topicId);
     }
 }

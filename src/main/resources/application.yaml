@@ -15,6 +15,11 @@ management:
 # Nacos Data ID: ms-java-biz-prod.yaml (或根据 profile 变化)
 
 spring:
+  # 国际化配置
+  messages:
+    basename: i18n/messages
+    encoding: UTF-8
+    fallback-to-system-locale: false
   # MongoDB - 将在 Nacos 配置中心配置
   data:
     mongodb:

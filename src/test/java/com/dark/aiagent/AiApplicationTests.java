@@ -6,7 +6,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.convert.MongoConverter;
-import com.dark.aiagent.module.biz.repository.TimeLimitedEventRepository;
+import com.dark.aiagent.domain.event.repository.EventRepository;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -15,7 +15,7 @@ import static org.mockito.Mockito.when;
 class AiApplicationTests {
 
     @MockBean
-    private TimeLimitedEventRepository timeLimitedEventRepository;
+    private EventRepository eventRepository;
 
     @MockBean
     private MongoTemplate mongoTemplate;

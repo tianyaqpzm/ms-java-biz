@@ -10,7 +10,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Component;
 
-import com.dark.aiagent.bean.ChatMessages;
+import com.dark.aiagent.infrastructure.persistence.chat.entity.MongoChatMessageDO;
 
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.ChatMessageDeserializer;
@@ -32,11 +32,11 @@ public class MongoChatMemoryStore implements ChatMemoryStore {
     public List<ChatMessage> getMessages(Object memoryId) {
         Criteria criteria = Criteria.where("memoryId").is(memoryId);
         Query query = new Query(criteria);
-        ChatMessages chatMessages = mongoTemplate.findOne(query, ChatMessages.class);
-        if (chatMessages == null) {
+        MongoChatMessageDO mongoChatMessageDO = mongoTemplate.findOne(query, MongoChatMessageDO.class);
+        if (mongoChatMessageDO == null) {
             return new LinkedList<>();
         }
-        return ChatMessageDeserializer.messagesFromJson(chatMessages.getContent());
+        return ChatMessageDeserializer.messagesFromJson(mongoChatMessageDO.getContent());
     }
 
     @Override
@@ -46,14 +46,14 @@ public class MongoChatMemoryStore implements ChatMemoryStore {
         Update update = new Update();
         update.set("content", ChatMessageSerializer.messagesToJson(messages));
         // 根据query条件能查询出文档，则修改文档；否则新增文档
-        mongoTemplate.upsert(query, update, ChatMessages.class);
+        mongoTemplate.upsert(query, update, MongoChatMessageDO.class);
     }
 
     @Override
     public void deleteMessages(Object memoryId) {
         Criteria criteria = Criteria.where("memoryId").is(memoryId);
         Query query = new Query(criteria);
-        mongoTemplate.remove(query, ChatMessages.class);
+        mongoTemplate.remove(query, MongoChatMessageDO.class);
 
     }
 }
