@@ -50,13 +50,6 @@ AFTER INSERT ON chat_messages
 FOR EACH ROW
 EXECUTE FUNCTION sync_chat_session();
 
--- 4. Initial data migration: populate chat_sessions from existing chat_messages
-INSERT INTO chat_sessions (session_id, title, last_active_time, created_at)
-SELECT 
-    session_id,
-    (SELECT content FROM chat_messages cm2 WHERE cm2.session_id = cm1.session_id AND role = 'user' ORDER BY created_at ASC LIMIT 1) as title,
-    MAX(created_at) as last_active_time,
-    MIN(created_at) as created_at
-FROM chat_messages cm1
-GROUP BY session_id
-ON CONFLICT (session_id) DO NOTHING;
+
+-- V1.2 optimized: Removed expensive initial data migration to prevent connection timeout.
+-- Future session data will be handled by the trigger defined above.
