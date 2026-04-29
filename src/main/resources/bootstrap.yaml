@@ -14,9 +14,16 @@ spring:
         namespace: ${NACOS_NAMESPACE}
         file-extension: yaml
         timeout: 5000
-        # 可选: 共享配置
+        # 显式声明加载顺序，确保含数据库配置的文件在 Bootstrap 阶段完成加载
+        # 优先级从低到高: shared-configs -> extension-configs -> 主 data-id
+        extension-configs:
+          - data-id: ms-java-biz-${ENV_TYPE:prod}.yaml
+            group: DEFAULT_GROUP
+            refresh: false  # 禁止启动期间触发 Context Refresh，避免与 Flyway 事务竞争
+        # 可选: 跨服务共享配置
         # shared-configs:
         #   - data-id: common.yaml
+        #     group: DEFAULT_GROUP
         #     refresh: true
       # --- 服务发现 ---
       discovery:

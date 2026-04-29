@@ -5,10 +5,21 @@ logging:
   level:
     root: info
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: 'health'
+
 # 以下配置可被 Nacos 配置中心覆盖
 # Nacos Data ID: ms-java-biz-prod.yaml (或根据 profile 变化)
 
 spring:
+  # 国际化配置
+  messages:
+    basename: i18n/messages
+    encoding: UTF-8
+    fallback-to-system-locale: false
   # MongoDB - 将在 Nacos 配置中心配置
   data:
     mongodb:
@@ -19,13 +30,31 @@ spring:
     url: ${PG_URL:jdbc:postgresql://localhost:5432/postgres}
     username: ${PG_USER:postgres}
     password: ${PG_PWD:postgres}
+    hikari:
+      keepalive-time: 10000     # 10秒发一次心跳保活
+      max-lifetime: 60000       # 1分钟强制回收连接，防止被服务端因为版本不匹配或空闲导致的踢除
+      connection-timeout: 30000 # 连接超时
+      idle-timeout: 30000       # 空闲超时
+      minimum-idle: 1
+      maximum-pool-size: 10
   # Flyway 数据库迁移
   flyway:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true  # 对已有数据库进行基线处理
     validate-on-migrate: true
-
+    # --- 物理隔离：复用 Nacos 下发的配置，但建立独立连接 ---
+    url: ${spring.datasource.url}
+    user: ${spring.datasource.username}
+    password: ${spring.datasource.password}
+    driver-class-name: org.postgresql.Driver
+    connect-retries: 10
+    connect-retries-interval: 3
+    # 修复 PostgreSQL 16 + Flyway 10.x 的连接重置问题
+    postgresql:
+      transactional:
+        lock: true  # 使用表级锁，对 PgBouncer 及不稳定网络更鲁棒
+    execute-in-transaction: true
 langchain4j:
   open-ai:
     chat-model:
@@ -68,5 +97,15 @@ langchain4j:
       index-list-size: 100
 
 app:
+  jwt:
+    secret: ${JWT_SECRET:your-256-bit-secret-your-256-bit-secret}
+  security:
+    ignore:
+      urls:
+        - /health
+        - /actuator/health
+        - /doc.html
+        - /webjars/**
+        - /v3/api-docs/**
   knowledge:
     upload-dir: ${KNOWLEDGE_UPLOAD_DIR:/tmp/ai_knowledge_uploads}

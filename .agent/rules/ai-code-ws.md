@@ -46,7 +46,7 @@ trigger: always_on
 
 7. **数据库迁移 (Flyway)**:
    - **脚本不可变性**: 严禁修改已经应用（Applied）到数据库的 SQL 迁移脚本。任何变更必须通过新建版本号（如 `V1.2__...`）实现。
-   - **Checksum 修复**: 开发环境下若因修改旧脚本导致 `FlywayValidateException`，应使用 `FlywayMigrationStrategy` 调用 `repair()` 同步校验和。
+    - **Checksum 修复**: 开发环境下若因修改旧脚本导致 `FlywayValidateException`，应使用 `FlywayMigrationStrategy` 调用 `repair()` 同步校验和。
 
 # Key Context (关键背景)
 这是一个核心业务服务 (`ms-java-biz`)。它连接 Nacos 进行服务注册，提供具体的业务工具（如 `query_order` 查订单, `search_knowledge` 查知识库），并通过 MCP SSE 供 ms-py-agent 远程调用。
