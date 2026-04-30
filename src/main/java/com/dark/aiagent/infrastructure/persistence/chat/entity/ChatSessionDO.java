@@ -15,7 +15,7 @@ import lombok.AllArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("chat_sessions")
+@TableName("ms_chat_session")
 public class ChatSessionDO {
     @TableId
     private String sessionId;

@@ -6,7 +6,7 @@ import lombok.Data;
 import java.util.Date;
 
 @Data
-@TableName("knowledge_topic")
+@TableName("ms_knowledge_topic")
 public class KnowledgeTopicDO {
     @TableId
     private String id;

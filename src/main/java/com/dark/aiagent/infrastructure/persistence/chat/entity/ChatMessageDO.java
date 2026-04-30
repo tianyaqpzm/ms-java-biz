@@ -16,7 +16,7 @@ import lombok.AllArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("chat_messages")
+@TableName("ms_chat_message")
 public class ChatMessageDO {
     @TableId(type = IdType.AUTO)
     private Long id;

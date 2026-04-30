@@ -13,7 +13,7 @@ import java.util.Date;
  * 仅用于框架的 ORM 映射，不包含任何业务方法
  */
 @Data
-@TableName(value = "knowledge_document", autoResultMap = true)
+@TableName(value = "ms_knowledge_document", autoResultMap = true)
 public class KnowledgeDocumentDO {
     @TableId
     private String id;

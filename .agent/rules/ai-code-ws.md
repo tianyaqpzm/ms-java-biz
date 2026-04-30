@@ -45,8 +45,16 @@ trigger: always_on
    - **切片测试 (Slice Testing)**: 针对 Controller 层测试，优先使用 `@WebMvcTest` 而非 `@SpringBootTest`。这可以避免加载不必要的业务配置类和基础设施 Bean，确保测试的精确性与高性能。
 
 7. **数据库迁移 (Flyway)**:
-   - **脚本不可变性**: 严禁修改已经应用（Applied）到数据库的 SQL 迁移脚本。任何变更必须通过新建版本号（如 `V1.2__...`）实现。
-    - **Checksum 修复**: 开发环境下若因修改旧脚本导致 `FlywayValidateException`，应使用 `FlywayMigrationStrategy` 调用 `repair()` 同步校验和。
+   - **脚本不可变性**: 严禁修改已经应用（Applied）到数据库的 SQL 迁移脚本。任何变更必须通过新建版本号（如 `V1.3__...`）实现。
+   - **Checksum 修复**: 开发环境下若因修改旧脚本导致 `FlywayValidateException`，应使用 `FlywayMigrationStrategy` 调用 `repair()` 同步校验和。
+
+8. **数据库设计规范 (Database Design Standards)**:
+   - **表命名**: 必须使用小写字母和下划线 (`snake_case`)，并统一加上 **`ms_`** 前缀（例：`ms_user` 而非 `user`，`ms_recipe` 而非 `recipe`）。
+   - **单数原则**: 表名必须使用**单数**形式，禁止使用复数（例：`user` 而非 `users`，`recipe` 而非 `recipes`）。
+   - **主键**: 统一使用 `id` 作为主键名。
+   - **公共字段**: 强制包含 `create_time` 和 `update_time` (或 `created_at`, `updated_at`)，类型为 `TIMESTAMPTZ` (带时区的时间戳)，以支持跨时区业务。
+   - **布尔值**: 使用 `is_xxx` 命名（如 `is_deleted`）。
+   - **注释**: 所有的表和字段必须通过 `COMMENT` 添加业务说明。
 
 # Key Context (关键背景)
 这是一个核心业务服务 (`ms-java-biz`)。它连接 Nacos 进行服务注册，提供具体的业务工具（如 `query_order` 查订单, `search_knowledge` 查知识库），并通过 MCP SSE 供 ms-py-agent 远程调用。
