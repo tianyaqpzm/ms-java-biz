@@ -46,7 +46,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String userId = claims.getSubject();
                 if (StringUtils.hasText(userId)) {
                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                            userId, null, new ArrayList<>());
+                            userId, token, new ArrayList<>());
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                     log.debug("Validated JWT for user: {}", userId);
                 }
