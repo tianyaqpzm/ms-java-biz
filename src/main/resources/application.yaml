@@ -64,7 +64,7 @@ langchain4j:
     embedding-model:
       base-url: ${EMBEDDING_MODEL_URL:http://langchain4j.dev/demo/openai/v1}
       api-key: ${EMBEDDING_MODEL_APIKEY:demo}
-      model-name: ${EMBEDDING_MODEL_NAME:text-embedding-3-small}
+      model-name: ${EMBEDDING_MODEL_NAME:gemini-embedding-2}
 
   # --- Ollama (已注释) ---
   # ollama:
@@ -107,5 +107,6 @@ app:
         - /error
         - /webjars/**
         - /v3/api-docs/**
+        - /.well-known/**
   knowledge:
     upload-dir: ${KNOWLEDGE_UPLOAD_DIR:/tmp/ai_knowledge_uploads}
