@@ -3,7 +3,7 @@ package com.dark.aiagent.infrastructure.persistence.knowledge.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.dark.aiagent.infrastructure.persistence.handler.PostgresJacksonTypeHandler;
 import com.dark.aiagent.domain.knowledge.valueobject.KnowledgeConfig;
 import lombok.Data;
 import java.util.Date;
@@ -23,7 +23,7 @@ public class KnowledgeDocumentDO {
     private String author;
     private String filePath;
 
-    @TableField(typeHandler = JacksonTypeHandler.class)
+    @TableField(typeHandler = PostgresJacksonTypeHandler.class)
     private KnowledgeConfig configJson;
 
     private Date createTime;

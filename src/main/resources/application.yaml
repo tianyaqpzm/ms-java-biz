@@ -104,6 +104,7 @@ app:
         - /health
         - /actuator/health
         - /doc.html
+        - /error
         - /webjars/**
         - /v3/api-docs/**
   knowledge:

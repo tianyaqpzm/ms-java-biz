@@ -8,17 +8,17 @@ import java.time.Instant;
 public record ErrorResponse(
     String traceId,
     int status,
-    String error,
-    String message,
+    String error_code,
+    String error_msg,
     String path,
     String timestamp
 ) {
-    public static ErrorResponse of(String traceId, int status, String error, String message, String path) {
+    public static ErrorResponse of(String traceId, int status, String errorCode, String errorMsg, String path) {
         return new ErrorResponse(
             traceId != null ? traceId : "",
             status,
-            error,
-            message,
+            errorCode,
+            errorMsg,
             path,
             Instant.now().toString()
         );

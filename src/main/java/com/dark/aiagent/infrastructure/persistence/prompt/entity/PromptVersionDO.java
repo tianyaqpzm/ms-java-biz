@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.dark.aiagent.infrastructure.persistence.handler.PostgresJacksonTypeHandler;
 import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -21,10 +21,10 @@ public class PromptVersionDO {
     private String versionTag;
     private String content;
     
-    @TableField(typeHandler = JacksonTypeHandler.class)
+    @TableField(typeHandler = PostgresJacksonTypeHandler.class)
     private Map<String, Object> variables;
     
-    @TableField(typeHandler = JacksonTypeHandler.class)
+    @TableField(typeHandler = PostgresJacksonTypeHandler.class)
     private Map<String, Object> modelConfig;
     
     private Boolean isActive;
