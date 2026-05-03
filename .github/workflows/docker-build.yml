@@ -39,11 +39,17 @@ jobs:
           # cache: maven
           server-id: github
           # 这里的环境变量会自动注入到 actions/setup-java 生成的 settings.xml 中
-          server-username: tianyaqpzm
-          server-password: ${{secrets.MVN_DEPLOY_TOKEN}}
+        # ⚠️ 核心修复：这里填写的是自定义的环境变量“名称”，绝对不能填真实的值！
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
 
       - name: Build with Maven
+        # 执行命令时，不需要加 -s，它会自动去找刚才生成的配置
         run: mvn clean install -U
+        env:
+          # ⚠️ 核心修复：在这里，把真实的值注入到上面定义的环境变量里
+          MAVEN_USERNAME: tianyaqpzm
+          MAVEN_PASSWORD: ${{ secrets.MVN_DEPLOY_TOKEN }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
