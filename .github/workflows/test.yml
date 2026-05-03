@@ -19,9 +19,21 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           # cache: maven
-          server-id: github
-          # 这里的环境变量会自动注入到 actions/setup-java 生成的 settings.xml 中
-          server-username: ${{ github.actor }}
-          server-password: ${{ secrets.MVN_DEPLOY_TOKEN }}
+
+      - name: Generate Direct settings.xml
+        # 直接通过 Shell 强行生成纯净的配置，所见即所得
+        run: |
+          cat <<EOF > absolute-settings.xml
+          <settings>
+            <servers>
+              <server>
+                <id>github</id>
+                <username>tianyaqpzm</username>
+                <password>${{ secrets.MVN_DEPLOY_TOKEN }}</password>
+              </server>
+            </servers>
+          </settings>
+          EOF
+
       - name: Run Tests
-        run: mvn -B test
+        run: mvn -B test -U -s absolute-settings.xml
