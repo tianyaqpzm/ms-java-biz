@@ -32,8 +32,29 @@ jobs:
           # 这里的环境变量会自动注入到 actions/setup-java 生成的 settings.xml 中
           server-username: ${{ github.actor }}
           server-password: ${{ secrets.MVN_DEPLOY_TOKEN }}
+# 显式指定 settings.xml 生成在当前工作目录，方便打印和排查
+          settings-path: ${{ github.workspace }}
+
+      - name: Diagnostic Step - Print settings.xml and variables
+        run: |
+          echo "=== 1. Current Actor ==="
+          echo "GitHub Actor is: ${{ github.actor }}"
+          
+          echo "=== 2. Check if Secret is empty ==="
+          # 如果 Secret 没读到，这里会输出 0，正常应该大于 0
+          echo "Secret length: ${#TOKEN}"
+          
+          echo "=== 3. Print generated settings.xml ==="
+          if [ -f "${{ github.workspace }}/settings.xml" ]; then
+            cat ${{ github.workspace }}/settings.xml
+          else
+            echo "Error: settings.xml not found at ${{ github.workspace }}/settings.xml"
+          fi
+        env:
+          TOKEN: ${{ secrets.MVN_DEPLOY_TOKEN }}
+
       - name: Build with Maven
-        run: mvn -B package -DskipTests
+        run: mvn clean install -U -s ${{ github.workspace }}/settings.xml -X
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
