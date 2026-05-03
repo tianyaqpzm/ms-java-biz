@@ -30,7 +30,7 @@ jobs:
           # cache: maven
           server-id: github
           # 这里的环境变量会自动注入到 actions/setup-java 生成的 settings.xml 中
-          server-username: ${{ github.actor }}
+          server-username: tianyaqpzm
           server-password: ${{ secrets.MVN_DEPLOY_TOKEN }}
 # 显式指定 settings.xml 生成在当前工作目录，方便打印和排查
           settings-path: ${{ github.workspace }}
