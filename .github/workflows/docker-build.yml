@@ -22,6 +22,15 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3  # 必须添加，用于模拟多架构
 
+      - name: Verify Secret is not empty
+        run: |
+          if [ -z "${{ secrets.MVN_DEPLOY_TOKEN }}" ]; then
+            echo "❌ 致命错误：Secret 为空！请检查 Secret 名字是否拼错或层级不对。"
+            exit 1
+          else
+            echo "✅ 成功：Secret 非空，已读取到。"
+          fi
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
