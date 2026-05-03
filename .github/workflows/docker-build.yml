@@ -22,19 +22,6 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3  # 必须添加，用于模拟多架构
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-          # cache: maven
-          server-id: github
-          # 这里的环境变量会自动注入到 actions/setup-java 生成的 settings.xml 中
-          server-username: tianyaqpzm
-          server-password: ${{ secrets.MVN_DEPLOY_TOKEN }}
-# 显式指定 settings.xml 生成在当前工作目录，方便打印和排查
-          settings-path: ${{ github.workspace }}
-
       - name: Diagnostic Step - Print settings.xml and variables
         run: |
           echo "=== 1. Current Actor ==="
@@ -52,6 +39,19 @@ jobs:
           fi
         env:
           TOKEN: ${{ secrets.MVN_DEPLOY_TOKEN }}
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          # cache: maven
+          server-id: github
+          # 这里的环境变量会自动注入到 actions/setup-java 生成的 settings.xml 中
+          server-username: tianyaqpzm
+          server-password: ${{ secrets.MVN_DEPLOY_TOKEN }}
+# 显式指定 settings.xml 生成在当前工作目录，方便打印和排查
+          settings-path: ${{ github.workspace }}
 
       - name: Build with Maven
         run: mvn clean install -U -s ${{ github.workspace }}/settings.xml -X
