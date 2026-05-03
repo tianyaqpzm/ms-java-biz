@@ -1,5 +1,6 @@
 package com.dark.aiagent.application.prompt;
 
+import com.dark.aiagent.domain.common.exception.BusinessException;
 import com.dark.aiagent.domain.prompt.entity.Prompt;
 import com.dark.aiagent.domain.prompt.repository.PromptRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -58,10 +59,11 @@ class PromptApplicationServiceTest {
         when(promptRepository.findActiveBySlug(testSlug)).thenReturn(Optional.empty());
 
         // When & Then
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+        BusinessException exception = assertThrows(BusinessException.class, () -> {
             promptApplicationService.getActivePrompt(testSlug);
         });
 
-        assertTrue(exception.getMessage().contains("not found"));
+        assertEquals("DEP_0100", exception.getErrorCode());
+        assertTrue(exception.getMessage().contains("不存在"));
     }
 }
