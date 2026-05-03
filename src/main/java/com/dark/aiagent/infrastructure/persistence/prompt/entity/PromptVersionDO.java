@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.dark.aiagent.infrastructure.persistence.handler.PostgresJacksonTypeHandler;
 import lombok.Data;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Map;
 
 /**
@@ -28,6 +28,6 @@ public class PromptVersionDO {
     private Map<String, Object> modelConfig;
     
     private Boolean isActive;
-    private LocalDateTime createTime;
-    private LocalDateTime updateTime;
+    private OffsetDateTime createTime;
+    private OffsetDateTime updateTime;
 }

@@ -1,5 +1,6 @@
 package com.dark.aiagent.application.prompt;
 
+import com.dark.aiagent.domain.common.exception.BusinessException;
 import com.dark.aiagent.domain.prompt.entity.Prompt;
 import com.dark.aiagent.domain.prompt.repository.PromptRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,6 @@ public class PromptApplicationService {
      */
     public Prompt getActivePrompt(String slug) {
         return promptRepository.findActiveBySlug(slug)
-                .orElseThrow(() -> new RuntimeException("Active prompt not found for slug: " + slug));
+                .orElseThrow(() -> new BusinessException("DEP_0100", "参数异常：" + slug + "不存在"));
     }
 }

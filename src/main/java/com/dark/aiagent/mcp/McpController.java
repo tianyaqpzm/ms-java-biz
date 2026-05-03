@@ -74,39 +74,48 @@ public class McpController {
 
     /**
      * 消息处理端点 (JSON-RPC)
+     * 支持双模：
+     * 1. 携带 sessionId: 通过 SSE 推送响应 (符合 MCP 标准)
+     * 2. 不带 sessionId: 直接通过 HTTP Body 返回响应 (简化模式)
      */
     @PostMapping("/messages")
-    public void handleMessage(@RequestParam String sessionId, @RequestBody JsonRpcRequest request) {
-        SseEmitter emitter = emitters.get(sessionId);
-        if (emitter == null) {
-            log.warn("Session 失效或不存在: {}", sessionId);
-            return;
-        }
-
+    public Object handleMessage(@RequestParam(required = false) String sessionId, @RequestBody JsonRpcRequest request) {
+        SseEmitter emitter = (sessionId != null) ? emitters.get(sessionId) : null;
+        
         try {
             Object result = null;
-            log.info("收到指令: {} [{}]", request.method(), sessionId);
+            log.info("收到指令: {} [Session: {}]", request.method(), sessionId);
 
             switch (request.method()) {
                 case "initialize" -> result = handleInitialize();
                 case "tools/list" -> result = handleListTools();
                 case "tools/call" -> result = handleCallTool(request);
                 case "notifications/initialized" -> {
-                    return;
-                } // 忽略通知
+                    return null;
+                }
                 default -> throw new IllegalArgumentException("未知的 method: " + request.method());
             }
 
             // 发送响应
             if (request.id() != null) {
                 JsonRpcResponse response = new JsonRpcResponse("2.0", request.id(), result, null);
-                emitter.send(SseEmitter.event().name("message").data(response));
+                if (emitter != null) {
+                    emitter.send(SseEmitter.event().name("message").data(response));
+                    return null; // SSE 模式返回空
+                }
+                return response; // Stateless 模式直接返回对象
             }
 
         } catch (Exception e) {
             log.error("处理消息失败", e);
-            sendError(emitter, request.id(), -32603, "Internal error: " + e.getMessage());
+            if (emitter != null) {
+                sendError(emitter, request.id(), -32603, "Internal error: " + e.getMessage());
+            } else {
+                return new JsonRpcResponse("2.0", request.id(), null, 
+                    Map.of("code", -32603, "message", "Internal error: " + e.getMessage()));
+            }
         }
+        return null;
     }
 
     // --- 内部处理逻辑 ---

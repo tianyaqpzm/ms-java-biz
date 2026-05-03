@@ -60,5 +60,12 @@ trigger: always_on
 9. **跨服务调用安全 (Inter-Service Security)**:
    - **Token 透传**: 当通过 `RestTemplate` 调用受保护的下游服务（如 `ms-py-agent`）时，必须配置并使用 `JwtTokenInterceptor` 进行 JWT Token 透传。严禁在没有身份凭证的情况下发起下游业务请求。
 
+10. **数据类型映射规范 (Data Type Mapping)**:
+    - **带时区时间戳**: 数据库中 `TIMESTAMPTZ` 类型的字段在 Java DO (Domain Object) 中必须映射为 `java.time.OffsetDateTime`，禁止使用 `LocalDateTime`，以避免时区转换异常及 SQL 语法错误。
+
+11. **MCP 健壮性与无状态支持 (MCP Robustness)**:
+    - **双模响应**: `McpController` 应支持 `sessionId` 可选。若缺失 `sessionId`，则应将响应直接作为 HTTP Body 返回，以支持客户端的无状态发现（Stateless Discovery）。
+    - **白名单规则**: 所有的 MCP 路由（`/mcp/**`）必须在安全配置中显式加入白名单，确保 Agent 的工具发现逻辑不被拦截。
+
 # Key Context (关键背景)
 这是一个核心业务服务 (`ms-java-biz`)。它连接 Nacos 进行服务注册，提供具体的业务工具（如 `query_order` 查订单, `search_knowledge` 查知识库），并通过 MCP SSE 供 ms-py-agent 远程调用。

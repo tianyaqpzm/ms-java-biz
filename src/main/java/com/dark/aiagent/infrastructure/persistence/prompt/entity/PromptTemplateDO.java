@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 /**
  * Prompt 模板主表数据对象
@@ -17,6 +17,6 @@ public class PromptTemplateDO {
     private String slug;
     private String type;
     private String description;
-    private LocalDateTime createTime;
-    private LocalDateTime updateTime;
+    private OffsetDateTime createTime;
+    private OffsetDateTime updateTime;
 }
