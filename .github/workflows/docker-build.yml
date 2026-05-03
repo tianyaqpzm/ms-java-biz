@@ -31,7 +31,7 @@ jobs:
           server-id: github
           # 这里的环境变量会自动注入到 actions/setup-java 生成的 settings.xml 中
           server-username: tianyaqpzm
-          server-password: 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
+          server-password: ${{secrets.MVN_DEPLOY_TOKEN}}
 
       - name: Build with Maven
         run: mvn clean install -U
