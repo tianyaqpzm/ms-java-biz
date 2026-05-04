@@ -20,4 +20,9 @@ public interface ChatRepository {
      * 获取所有会话列表 (包含推导出的 Title 和 最后活跃时间)
      */
     List<ChatSession> findAllSessions();
+
+    /**
+     * 删除指定会话及其所有消息
+     */
+    void deleteSession(String sessionId);
 }

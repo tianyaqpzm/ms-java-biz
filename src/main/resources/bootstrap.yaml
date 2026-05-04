@@ -13,7 +13,7 @@ spring:
       config:
         namespace: ${NACOS_NAMESPACE}
         file-extension: yaml
-        timeout: 5000
+        timeout: 10000
         # 显式声明加载顺序，确保含数据库配置的文件在 Bootstrap 阶段完成加载
         # 优先级从低到高: shared-configs -> extension-configs -> 主 data-id
         extension-configs:
@@ -28,4 +28,4 @@ spring:
       # --- 服务发现 ---
       discovery:
         namespace: ${NACOS_NAMESPACE}
-        timeout: 5000
+        timeout: 10000

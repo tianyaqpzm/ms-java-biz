@@ -20,9 +20,11 @@ import com.dark.aiagent.domain.knowledge.entity.KnowledgeDocument;
 import com.dark.aiagent.domain.knowledge.repository.KnowledgeDocumentRepository;
 import com.dark.aiagent.domain.knowledge.valueobject.KnowledgeConfig;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Date;
+import java.util.List;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.ServiceInstance;
-import java.util.List;
 
 @Service
 public class KnowledgeDocumentApplicationServiceImpl implements KnowledgeDocumentApplicationService {
@@ -32,10 +34,16 @@ public class KnowledgeDocumentApplicationServiceImpl implements KnowledgeDocumen
 
     private final KnowledgeDocumentRepository documentRepository;
     private final PythonAgentClient pythonAgentClient;
+    private final ObjectMapper objectMapper;
 
-    public KnowledgeDocumentApplicationServiceImpl(KnowledgeDocumentRepository documentRepository, PythonAgentClient pythonAgentClient) {
+    public KnowledgeDocumentApplicationServiceImpl(
+        KnowledgeDocumentRepository documentRepository,
+        PythonAgentClient pythonAgentClient,
+        ObjectMapper objectMapper
+    ) {
         this.documentRepository = documentRepository;
         this.pythonAgentClient = pythonAgentClient;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -112,12 +120,9 @@ public class KnowledgeDocumentApplicationServiceImpl implements KnowledgeDocumen
         KnowledgeDocument doc = documentRepository.findById(documentId)
             .orElseThrow(() -> new RuntimeException("Document not found"));
 
-        // 构建不可变 Value Object
-        KnowledgeConfig config = new KnowledgeConfig(
-            ingestPayload.containsKey("chunkSize") ? (Integer) ingestPayload.get("chunkSize") : null,
-            ingestPayload.containsKey("chunkOverlap") ? (Integer) ingestPayload.get("chunkOverlap") : null,
-            null, null, null, null, null, null, null
-        );
+        // 业界最佳实践：使用 ObjectMapper 自动映射扁平 Map 到嵌套领域对象
+        // 这里我们先映射到一个平铺的 DTO，再构建领域模型，或者直接使用 objectMapper 的能力
+        KnowledgeConfig config = convertToConfig(ingestPayload);
 
         // 充血模型：触发业务状态变化
         doc.assignConfig(config);
@@ -129,8 +134,21 @@ public class KnowledgeDocumentApplicationServiceImpl implements KnowledgeDocumen
             doc.getFilePath() != null ? doc.getFilePath() : "mock/path.txt",
             doc.getTopicId(),
             "default",
-            config.chunkSize(),
-            config.chunkOverlap()
+            config.chunking().chunkSize(),
+            config.chunking().chunkOverlap(),
+            config.chunking().separators(),
+            config.indexing().embeddingModel(),
+            config.indexing().vectorStore(),
+            config.retrieval().topK(),
+            config.retrieval().scoreThreshold(),
+            config.retrieval().enableHybridSearch(),
+            config.retrieval().alphaWeight(),
+            config.generation().generationModel(),
+            config.generation().temperature(),
+            config.generation().maxTokens(),
+            config.generation().systemPrompt(),
+            config.evaluation().enableEvaluation(),
+            config.evaluation().evaluationMetrics()
         );
         
         try {
@@ -148,6 +166,44 @@ public class KnowledgeDocumentApplicationServiceImpl implements KnowledgeDocumen
             doc.markAsFailed(); // 充血模型：标记失败
             documentRepository.update(doc);
             throw new RuntimeException("Failed to call ms-py-agent: " + e.getMessage());
+        }
+    }
+    /**
+     * 将前端平铺的 Map 转换为结构化的领域对象
+     */
+    private KnowledgeConfig convertToConfig(Map<String, Object> payload) {
+        try {
+            // 步骤 1: 使用 Jackson 将 Map 转换为平铺的 DTO (复用 IngestDocumentRequest 的解析能力)
+            // 注意：这里为了简化，我们直接从 Map 手动构建嵌套结构，但使用包装方法
+            return new KnowledgeConfig(
+                new KnowledgeConfig.ChunkingConfig(
+                    (Integer) payload.get("chunkSize"),
+                    (Integer) payload.get("chunkOverlap"),
+                    (List<String>) payload.get("separators")
+                ),
+                new KnowledgeConfig.IndexingConfig(
+                    (String) payload.get("embeddingModel"),
+                    (String) payload.get("vectorStore")
+                ),
+                new KnowledgeConfig.RetrievalConfig(
+                    (Integer) payload.get("topK"),
+                    payload.get("scoreThreshold") != null ? Double.valueOf(payload.get("scoreThreshold").toString()) : null,
+                    (Boolean) payload.get("enableHybridSearch"),
+                    payload.get("alphaWeight") != null ? Double.valueOf(payload.get("alphaWeight").toString()) : null
+                ),
+                new KnowledgeConfig.GenerationConfig(
+                    (String) payload.get("generationModel"),
+                    payload.get("temperature") != null ? Double.valueOf(payload.get("temperature").toString()) : null,
+                    (Integer) payload.get("maxTokens"),
+                    (String) payload.get("systemPrompt")
+                ),
+                new KnowledgeConfig.EvaluationConfig(
+                    (Boolean) payload.get("enableEvaluation"),
+                    (List<String>) payload.get("evaluationMetrics")
+                )
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("解析配置参数失败: " + e.getMessage());
         }
     }
 }

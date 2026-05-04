@@ -8,13 +8,16 @@ RUN apk add --no-cache maven
 
 WORKDIR /app
 
-# 缓存依赖
-COPY pom.xml .
-RUN mvn dependency:go-offline -B
+# 缓存依赖， Docker 多阶段构建（Multi-stage Build）的核心技巧
+# 因为含有自建二方库 要么把密钥写入环境变量，要么彻底将CI流程独立，因此注释掉
+# COPY pom.xml .
+# RUN mvn dependency:go-offline -B
 
-# 复制源代码并构建
-COPY src ./src
-RUN mvn clean package -DskipTests
+# 复制源代码并构建，与docker-build.yml重复
+# COPY src ./src
+# RUN mvn clean package -DskipTests
+# 此时的jar路径
+# COPY --from=build /app/target/ms-java-biz*.jar /app/ms-java-biz.jar
 
 # ==========================================
 # 第二阶段：运行应用 (改用带 Shell 的镜像)
@@ -25,12 +28,11 @@ FROM eclipse-temurin:17-jre
 WORKDIR /app
 
 # 1. 创建非 root 用户并安装 curl (用于健康检查)
-RUN apt-get update && apt-get install -y curl && \
-    rm -rf /var/lib/apt/lists/* && \
+RUN rm -rf /var/lib/apt/lists/* && \
     groupadd -r appgroup && useradd -r -g appgroup appuser
 
-# 2. 从构建阶段复制 jar 包
-COPY --from=build /app/target/ms-java-biz*.jar /app/ms-java-biz.jar
+# 2. 从CI阶段复制 jar 包: GitHub Actions 刚刚执行完 mvn package
+COPY target/ms-java-biz*.jar /app/ms-java-biz.jar
 
 # 3. 复制并设置 entrypoint.sh
 COPY entrypoint.sh /app/entrypoint.sh
@@ -47,9 +49,9 @@ ENV APP_PORT=8080
 # 声明端口
 EXPOSE $APP_PORT
 
-# 5. 健康检查 (Eclipse Temurin 带有 curl，可以直接用)
+# 5. 健康检查 (使用 wget)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-  CMD curl -f http://localhost:${APP_PORT}/actuator/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:${APP_PORT}/actuator/health || exit 1
 
 # 切换到非 root 用户
 USER appuser

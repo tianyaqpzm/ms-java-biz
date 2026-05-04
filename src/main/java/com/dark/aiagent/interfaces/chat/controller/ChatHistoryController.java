@@ -4,7 +4,9 @@ import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -36,5 +38,12 @@ public class ChatHistoryController {
     @GetMapping("/sessions")
     public ResponseEntity<List<ChatSessionDto>> getSessions() {
         return ResponseEntity.ok(chatApplicationService.getAllSessions());
+    }
+
+    @Operation(summary = "Delete a chat session")
+    @DeleteMapping("/sessions/{sessionId}")
+    public ResponseEntity<Void> deleteSession(@PathVariable String sessionId) {
+        chatApplicationService.deleteSession(sessionId);
+        return ResponseEntity.noContent().build();
     }
 }

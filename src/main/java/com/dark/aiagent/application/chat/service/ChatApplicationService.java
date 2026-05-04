@@ -26,4 +26,8 @@ public class ChatApplicationService {
                 .map(s -> new ChatSessionDto(s.getSessionId(), s.getTitle(), s.getLastActiveTime()))
                 .collect(Collectors.toList());
     }
+
+    public void deleteSession(String sessionId) {
+        chatRepository.deleteSession(sessionId);
+    }
 }

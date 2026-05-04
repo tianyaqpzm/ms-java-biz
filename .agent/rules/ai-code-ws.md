@@ -27,6 +27,7 @@ trigger: always_on
 
 3. **数据访问**:
    - 使用 **MyBatis-Plus**。对于 PostgreSQL 的 `JSONB` 字段（用于存储动态数据），必须配置 `JacksonTypeHandler` 进行自动映射。
+   - **DDD 值对象持久化**: 复杂的配置项（如 RAG 配置）应定义为不可变的 Java `record`，通过 JSONB 字段存储在数据库中，确保领域模型的整洁与配置的灵活性。
    - 使用 **LangChain4j** 的 Embedding Store 接口进行向量搜索操作。
 
 4. **代码可读性与规范 (Code Readability)**:
@@ -42,11 +43,29 @@ trigger: always_on
    - **基础设施 Mock**: 禁止在单元测试/集成测试中直连 MongoDB。必须通过 `@TestConfiguration` 提供 Mock 的 `MongoTemplate` 豆 (Bean)，并 Mock `getConverter()` 以满足 Spring Data Repositories 的加载。
    - **依赖冲突防护**: 由于同时引用了 Spring Cloud Alibaba 和 LangChain4j BOM，当发现 `NoSuchMethodError` 时，必须通过 `mvn dependency:tree` 检查版本，并在 `pom.xml` 中显式指定高版本 SDK（通常是 DashScope SDK）。
    - **Context 优化**: 在 `application-test.yml` 中应排除不必要的自动配置（如 `MongoAutoConfiguration`），加快启动速度并减少环境依赖。
-   - **切片测试 (Slice Testing)**: 针对 Controller 层测试，优先使用 `@WebMvcTest` 而非 `@SpringBootTest`。这可以避免加载不必要的业务配置类和基础设施 Bean，确保测试的精确性与高性能。
+   - **切片测试 (Slice Testing)**: 针对 Controller 层测试，优先使用 `@WebMvcTest` 而非 `@SpringBootTest`。这可以避免加载不必要的业务配置类 and 基础设施 Bean，确保测试的精确性与高性能。
 
 7. **数据库迁移 (Flyway)**:
-   - **脚本不可变性**: 严禁修改已经应用（Applied）到数据库的 SQL 迁移脚本。任何变更必须通过新建版本号（如 `V1.2__...`）实现。
-    - **Checksum 修复**: 开发环境下若因修改旧脚本导致 `FlywayValidateException`，应使用 `FlywayMigrationStrategy` 调用 `repair()` 同步校验和。
+   - **脚本不可变性**: 严禁修改已经应用（Applied）到数据库的 SQL 迁移脚本。任何变更必须通过新建版本号（如 `V1.3__...`）实现。
+   - **Checksum 修复**: 开发环境下若因修改旧脚本导致 `FlywayValidateException`，应使用 `FlywayMigrationStrategy` 调用 `repair()` 同步校验和。
+
+8. **数据库设计规范 (Database Design Standards)**:
+   - **表命名**: 必须使用小写字母和下划线 (`snake_case`)，并统一加上 **`ms_`** 前缀（例：`ms_user` 而非 `user`，`ms_recipe` 而非 `recipe`）。
+   - **单数原则**: 表名必须使用**单数**形式，禁止使用复数（例：`user` 而非 `users`，`recipe` 而非 `recipes`）。
+   - **主键**: 统一使用 `id` 作为主键名。
+   - **公共字段**: 强制包含 `create_time` 和 `update_time` (或 `created_at`, `updated_at`)，类型为 `TIMESTAMPTZ` (带时区的时间戳)，以支持跨时区业务。
+   - **布尔值**: 使用 `is_xxx` 命名（如 `is_deleted`）。
+   - **注释**: 所有的表和字段必须通过 `COMMENT` 添加业务说明。
+
+9. **跨服务调用安全 (Inter-Service Security)**:
+   - **Token 透传**: 当通过 `RestTemplate` 调用受保护的下游服务（如 `ms-py-agent`）时，必须配置并使用 `JwtTokenInterceptor` 进行 JWT Token 透传。严禁在没有身份凭证的情况下发起下游业务请求。
+
+10. **数据类型映射规范 (Data Type Mapping)**:
+    - **带时区时间戳**: 数据库中 `TIMESTAMPTZ` 类型的字段在 Java DO (Domain Object) 中必须映射为 `java.time.OffsetDateTime`，禁止使用 `LocalDateTime`，以避免时区转换异常及 SQL 语法错误。
+
+11. **MCP 健壮性与无状态支持 (MCP Robustness)**:
+    - **双模响应**: `McpController` 应支持 `sessionId` 可选。若缺失 `sessionId`，则应将响应直接作为 HTTP Body 返回，以支持客户端的无状态发现（Stateless Discovery）。
+    - **白名单规则**: 所有的 MCP 路由（`/mcp/**`）必须在安全配置中显式加入白名单，确保 Agent 的工具发现逻辑不被拦截。
 
 # Key Context (关键背景)
 这是一个核心业务服务 (`ms-java-biz`)。它连接 Nacos 进行服务注册，提供具体的业务工具（如 `query_order` 查订单, `search_knowledge` 查知识库），并通过 MCP SSE 供 ms-py-agent 远程调用。

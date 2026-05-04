@@ -53,6 +53,17 @@ public class ChatRepositoryImpl implements ChatRepository {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public void deleteSession(String sessionId) {
+        // 1. Delete session metadata
+        chatSessionMapper.deleteById(sessionId);
+        // 2. Delete all messages in the session
+        chatMessageMapper.delete(
+            Wrappers.<ChatMessageDO>lambdaQuery()
+                    .eq(ChatMessageDO::getSessionId, sessionId)
+        );
+    }
+
     private ChatMessage toDomain(ChatMessageDO doEntity) {
         if (doEntity == null) return null;
         return new ChatMessage(

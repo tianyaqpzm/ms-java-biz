@@ -10,7 +10,7 @@ import com.dark.aiagent.domain.event.repository.EventRepository;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@SpringBootTest
+@SpringBootTest(classes = AiApplication.class)
 @org.springframework.test.context.ActiveProfiles("test")
 class AiApplicationTests {
 

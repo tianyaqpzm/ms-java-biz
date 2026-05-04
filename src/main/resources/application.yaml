@@ -4,7 +4,7 @@ server:
 logging:
   level:
     root: info
-
+    org.flywaydb: info  # 开启调试日志，能看清每一条执行的 SQL
 management:
   endpoints:
     web:
@@ -27,33 +27,32 @@ spring:
   # PostgreSQL - 将在 Nacos 配置中心配置
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: ${PG_URL:jdbc:postgresql://localhost:5432/postgres}
+    url: ${PG_URL:jdbc:postgresql://localhost:5432/postgres?tcpKeepAlive=true&prepareThreshold=0&options=-c%20search_path=public&client_encoding=UTF8&connectTimeout=30&socketTimeout=60}
     username: ${PG_USER:postgres}
     password: ${PG_PWD:postgres}
     hikari:
-      keepalive-time: 10000     # 10秒发一次心跳保活
-      max-lifetime: 60000       # 1分钟强制回收连接，防止被服务端因为版本不匹配或空闲导致的踢除
+      keepalive-time: 30000     # 30秒发一次心跳保活
+      max-lifetime: 900000     # 15分钟强制回收连接
       connection-timeout: 30000 # 连接超时
-      idle-timeout: 30000       # 空闲超时
+      idle-timeout: 60000       # 空闲超时
       minimum-idle: 1
       maximum-pool-size: 10
   # Flyway 数据库迁移
   flyway:
-    enabled: true
+    enabled: false             # 已移至 FlywayConfig 手动控制，监听 ApplicationReadyEvent 执行
     locations: classpath:db/migration
-    baseline-on-migrate: true  # 对已有数据库进行基线处理
-    validate-on-migrate: true
-    # --- 物理隔离：复用 Nacos 下发的配置，但建立独立连接 ---
-    url: ${spring.datasource.url}
+    # --- 独立连接配置 (由 FlywayConfig 读取) ---
+    # options=-c search_path=public: 这是一个关键技巧。通过在 URL 中硬编码 search_path，Flyway 驱动会认为会话状态从未被修改过，
+    # 从而跳过退出时的 restoreOriginalState 逻辑，在之前的事故中，正是这个还原逻辑在 Nacos 刷新或 PgBouncer 环境下触发了 EOFException 导致启动失败
+    url: ${SPRING_FLYWAY_URL:jdbc:postgresql://tao-lan.122577.xyz:5432/postgres?prepareThreshold=0&tcpKeepAlive=true&connectTimeout=30&socketTimeout=0&options=-c%20statement_timeout=0%20-c%20search_path=public&reWriteBatchedInserts=true}
     user: ${spring.datasource.username}
     password: ${spring.datasource.password}
     driver-class-name: org.postgresql.Driver
-    connect-retries: 10
-    connect-retries-interval: 3
-    # 修复 PostgreSQL 16 + Flyway 10.x 的连接重置问题
+    connect-retries: 20
+    connect-retries-interval: 5
     postgresql:
       transactional:
-        lock: true  # 使用表级锁，对 PgBouncer 及不稳定网络更鲁棒
+        lock: false  # 适配 PgBouncer 事务模式
     execute-in-transaction: true
 langchain4j:
   open-ai:
@@ -65,7 +64,7 @@ langchain4j:
     embedding-model:
       base-url: ${EMBEDDING_MODEL_URL:http://langchain4j.dev/demo/openai/v1}
       api-key: ${EMBEDDING_MODEL_APIKEY:demo}
-      model-name: ${EMBEDDING_MODEL_NAME:text-embedding-3-small}
+      model-name: ${EMBEDDING_MODEL_NAME:gemini-embedding-2}
 
   # --- Ollama (已注释) ---
   # ollama:
@@ -105,7 +104,10 @@ app:
         - /health
         - /actuator/health
         - /doc.html
+        - /error
         - /webjars/**
         - /v3/api-docs/**
+        - /.well-known/**
+        - /mcp/**
   knowledge:
     upload-dir: ${KNOWLEDGE_UPLOAD_DIR:/tmp/ai_knowledge_uploads}
