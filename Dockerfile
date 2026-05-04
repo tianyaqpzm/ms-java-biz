@@ -32,8 +32,8 @@ RUN apt-get update && apt-get install -y curl && \
     rm -rf /var/lib/apt/lists/* && \
     groupadd -r appgroup && useradd -r -g appgroup appuser
 
-# 2. 从构建阶段复制 jar 包
-COPY --from=build target/ms-java-biz*.jar /app/ms-java-biz.jar
+# 2. 从CI阶段复制 jar 包: GitHub Actions 刚刚执行完 mvn package
+COPY target/ms-java-biz*.jar /app/ms-java-biz.jar
 
 # 3. 复制并设置 entrypoint.sh
 COPY entrypoint.sh /app/entrypoint.sh
