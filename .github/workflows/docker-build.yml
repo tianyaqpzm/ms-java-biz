@@ -61,10 +61,10 @@ jobs:
         id: meta
         uses: docker/metadata-action@v6
         with:
-          # docker hub名称，不能是组织名：4fork
+          # docker hub名称，不能是组织名：4fork, ghcr是可选 暂时没有用
           images: |
             tianyaqpzm/ms-java-biz
-            ghcr.io/${{ github.repository_owner }}/ms-java-biz  # 可选
+            ghcr.io/${{ github.repository_owner }}/ms-java-biz
           tags: |
             type=ref,event=branch
             type=ref,event=pr
