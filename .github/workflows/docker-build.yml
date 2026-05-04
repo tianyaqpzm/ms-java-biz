@@ -61,8 +61,9 @@ jobs:
         id: meta
         uses: docker/metadata-action@v6
         with:
+          # docker hub名称，不能是组织名：4fork
           images: |
-            tianyaqpzm/ms-java-biz # docker hub名称，不能是组织名：4fork
+            tianyaqpzm/ms-java-biz
             ghcr.io/${{ github.repository_owner }}/ms-java-biz  # 可选
           tags: |
             type=ref,event=branch
@@ -104,7 +105,7 @@ jobs:
             
             # 拉取最新镜像
             IMAGE_TAG=${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || 'master' }}
-            docker pull 4dark/ms-java-biz:${IMAGE_TAG}
+            docker pull tianyaqpzm/ms-java-biz:${IMAGE_TAG}
             # 需提前创建docker内部网络: pei-network
             # host-gateway 是 Docker 的魔法词，自动指向宿主机内网 IP
             # 启动新容器
@@ -119,7 +120,7 @@ jobs:
               -e NACOS_NAMESPACE=${{ vars.NACOS_NAMESPACE }} \
               -e NACOS_USERNAME=${{ secrets.NACOS_USERNAME }} \
               -e NACOS_PASSWORD=${{ secrets.NACOS_PASSWORD }} \
-              4dark/ms-java-biz:${IMAGE_TAG}
+              tianyaqpzm/ms-java-biz:${IMAGE_TAG}
             
             # 清理无用镜像
             docker image prune -af
