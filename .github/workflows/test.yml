@@ -18,10 +18,15 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: maven
+          # cache: maven
           server-id: github
-          server-username: tianyaqpzm
-          server-password: ${{ secrets.MVN_DEPLOY_TOKEN }}
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
 
       - name: Run Tests
+        # 执行命令时，不需要加 -s，它会自动去找刚才生成的配置
         run: mvn -B test
+        env:
+          # ⚠️ 核心修复：在这里，把真实的值注入到上面定义的环境变量里
+          MAVEN_USERNAME: tianyaqpzm
+          MAVEN_PASSWORD: ${{ secrets.MVN_DEPLOY_TOKEN }}
