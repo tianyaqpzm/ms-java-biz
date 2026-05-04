@@ -62,7 +62,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            4dark/ms-java-biz
+            tianyaqpzm/ms-java-biz
             ghcr.io/${{ github.repository_owner }}/ms-java-biz  # 可选
           tags: |
             type=ref,event=branch
