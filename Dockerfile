@@ -8,13 +8,14 @@ RUN apk add --no-cache maven
 
 WORKDIR /app
 
-# 缓存依赖
-COPY pom.xml .
-RUN mvn dependency:go-offline -B
+# 缓存依赖， Docker 多阶段构建（Multi-stage Build）的核心技巧
+# 因为含有自建二方库 要么把密钥写入环境变量，要么彻底将CI流程独立，因此注释掉
+# COPY pom.xml .
+# RUN mvn dependency:go-offline -B
 
-# 复制源代码并构建
-COPY src ./src
-RUN mvn clean package -DskipTests
+# 复制源代码并构建，与docker-build.yml重复
+# COPY src ./src
+# RUN mvn clean package -DskipTests
 
 # ==========================================
 # 第二阶段：运行应用 (改用带 Shell 的镜像)
