@@ -32,6 +32,9 @@ public class FlywayConfig {
     @Value("${spring.flyway.password}")
     private String password;
 
+    @Value("${spring.flyway.enabled:true}")
+    private boolean enabled;
+
     @Bean
     public Flyway flyway() {
         return Flyway.configure()
@@ -47,6 +50,10 @@ public class FlywayConfig {
 
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReady(ApplicationReadyEvent event) {
+        if (!enabled) {
+            log.info("【Flyway】配置为禁用，跳过迁移任务");
+            return;
+        }
         log.info("【Flyway】检测到应用就绪，开始执行延迟迁移任务...");
         try {
             // 从上下文中获取 Bean 确保单例执行

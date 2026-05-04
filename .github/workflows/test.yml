@@ -25,7 +25,7 @@ jobs:
 
       - name: Run Tests
         # 执行命令时，不需要加 -s，它会自动去找刚才生成的配置
-        run: mvn -B test
+        run: mvn -B test -Dspring.profiles.active=ci
         env:
           # ⚠️ 核心修复：在这里，把真实的值注入到上面定义的环境变量里
           MAVEN_USERNAME: tianyaqpzm

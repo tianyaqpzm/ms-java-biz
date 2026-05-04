@@ -203,6 +203,16 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>jdbc</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     
     <dependencyManagement>
@@ -253,7 +263,7 @@
     <repositories>
         <repository>
             <id>github</id>
-            <url>https://maven.pkg.github.com/tianyaqpzm/ms-java-yaml2code-sdk</url>
+            <url>https://maven.pkg.github.com/4Dark/ms-java-yaml2code-sdk</url>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>

@@ -16,6 +16,8 @@ WORKDIR /app
 # 复制源代码并构建，与docker-build.yml重复
 # COPY src ./src
 # RUN mvn clean package -DskipTests
+# 此时的jar路径
+# COPY --from=build /app/target/ms-java-biz*.jar /app/ms-java-biz.jar
 
 # ==========================================
 # 第二阶段：运行应用 (改用带 Shell 的镜像)
@@ -31,7 +33,7 @@ RUN apt-get update && apt-get install -y curl && \
     groupadd -r appgroup && useradd -r -g appgroup appuser
 
 # 2. 从构建阶段复制 jar 包
-COPY --from=build /app/target/ms-java-biz*.jar /app/ms-java-biz.jar
+COPY --from=build target/ms-java-biz*.jar /app/ms-java-biz.jar
 
 # 3. 复制并设置 entrypoint.sh
 COPY entrypoint.sh /app/entrypoint.sh
