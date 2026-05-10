@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.dark.aiagent.infrastructure.persistence.handler.PostgresJacksonTypeHandler;
 import lombok.Data;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -22,7 +23,7 @@ public class PromptVersionDO {
     private String content;
     
     @TableField(typeHandler = PostgresJacksonTypeHandler.class)
-    private Map<String, Object> variables;
+    private List<String> variables;
     
     @TableField(typeHandler = PostgresJacksonTypeHandler.class)
     private Map<String, Object> modelConfig;

@@ -1,5 +1,6 @@
 package com.dark.aiagent.interfaces.prompt.dto;
 
+import java.util.List;
 import java.util.Map;
 
 public record PromptResponse(
@@ -7,5 +8,5 @@ public record PromptResponse(
     String version,
     String content,
     Map<String, Object> modelConfig,
-    Map<String, Object> variables
+    List<String> variables
 ) {}
