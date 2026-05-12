@@ -24,7 +24,7 @@ public class PromptApplicationService {
      */
     public Prompt getActivePrompt(String slug) {
         return promptRepository.findActiveBySlug(slug)
-                .orElseThrow(() -> new BusinessException("DEP_0100", "提示词未找到：" + slug));
+                .orElseThrow(() -> new BusinessException("DEP_0100", "提示词不存在：" + slug));
     }
 
     /**

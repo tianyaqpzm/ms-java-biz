@@ -27,31 +27,24 @@ import lombok.extern.slf4j.Slf4j;
 public class McpController {
 
     private final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
-    // private final ObjectMapper objectMapper;
-
-    // 🔥 核心：自动注入所有实现了 McpTool 接口的 Bean
-    // 这就是一个动态的 "ToolRegistry"
     private final Map<String, McpTool> toolRegistry;
+    private final com.dark.aiagent.infrastructure.mcp.McpProxyService mcpProxyService;
 
-    public McpController(ObjectMapper objectMapper, List<McpTool> tools) {
-        // this.objectMapper = objectMapper;
-        // 将 List 转为 Map，方便按名字查找 (Key=toolName, Value=ToolInstance)
+    public McpController(ObjectMapper objectMapper, List<McpTool> tools, 
+                         com.dark.aiagent.infrastructure.mcp.McpProxyService mcpProxyService) {
+        this.mcpProxyService = mcpProxyService;
         this.toolRegistry =
                 tools.stream().collect(Collectors.toMap(McpTool::getName, tool -> tool));
 
-        log.info("MCP Server 已启动, 加载了 {} 个工具: {}", toolRegistry.size(), toolRegistry.keySet());
+        log.info("MCP Server 已启动, 加载了 {} 个静态工具: {}", toolRegistry.size(), toolRegistry.keySet());
     }
 
-    /**
-     * SSE 握手端点
-     */
     @GetMapping(path = "/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter subscribe() {
         SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
         String sessionId = UUID.randomUUID().toString();
         emitters.put(sessionId, emitter);
 
-        // 资源清理回调
         Runnable cleanup = () -> {
             emitters.remove(sessionId);
             log.debug("SSE 连接断开: {}", sessionId);
@@ -61,7 +54,6 @@ public class McpController {
         emitter.onError(e -> cleanup.run());
 
         try {
-            // 发送 Endpoint 事件
             String endpointUrl = "/mcp/messages?sessionId=" + sessionId;
             emitter.send(SseEmitter.event().name("endpoint").data(endpointUrl));
             log.info("Client 已连接, Session: {}", sessionId);
@@ -72,12 +64,6 @@ public class McpController {
         return emitter;
     }
 
-    /**
-     * 消息处理端点 (JSON-RPC)
-     * 支持双模：
-     * 1. 携带 sessionId: 通过 SSE 推送响应 (符合 MCP 标准)
-     * 2. 不带 sessionId: 直接通过 HTTP Body 返回响应 (简化模式)
-     */
     @PostMapping("/messages")
     public Object handleMessage(@RequestParam(required = false) String sessionId, @RequestBody JsonRpcRequest request) {
         SseEmitter emitter = (sessionId != null) ? emitters.get(sessionId) : null;
@@ -96,14 +82,13 @@ public class McpController {
                 default -> throw new IllegalArgumentException("未知的 method: " + request.method());
             }
 
-            // 发送响应
             if (request.id() != null) {
                 JsonRpcResponse response = new JsonRpcResponse("2.0", request.id(), result, null);
                 if (emitter != null) {
                     emitter.send(SseEmitter.event().name("message").data(response));
-                    return null; // SSE 模式返回空
+                    return null;
                 }
-                return response; // Stateless 模式直接返回对象
+                return response;
             }
 
         } catch (Exception e) {
@@ -118,33 +103,32 @@ public class McpController {
         return null;
     }
 
-    // --- 内部处理逻辑 ---
-
     private Map<String, Object> handleInitialize() {
         return Map.of("protocolVersion", "2024-11-05", "capabilities", Map.of("tools", Map.of()),
                 "serverInfo", Map.of("name", "ProductionJavaMcp", "version", "2.0"));
     }
 
     private Map<String, Object> handleListTools() {
-        // 动态将所有 Tool 转换为 Protocol 定义
-        List<ToolDefinition> definitions = toolRegistry.values().stream()
+        List<ToolDefinition> definitions = new java.util.ArrayList<>(toolRegistry.values().stream()
                 .map(t -> new ToolDefinition(t.getName(), t.getDescription(), t.getInputSchema()))
-                .toList();
+                .toList());
+        
+        definitions.addAll(mcpProxyService.getDynamicTools());
         return Map.of("tools", definitions);
     }
 
     private ToolResult handleCallTool(JsonRpcRequest request) {
         String name = request.params().get("name").asText();
-        // Jackson 的 JsonNode.get("arguments")
         var args = request.params().get("arguments");
 
         McpTool tool = toolRegistry.get(name);
-        if (tool == null) {
-            throw new IllegalArgumentException("工具不存在: " + name);
+        if (tool != null) {
+            log.info("执行静态工具: {}", name);
+            return tool.execute(args);
         }
 
-        log.info("执行工具: {}", name);
-        return tool.execute(args);
+        log.info("尝试通过代理执行工具: {}", name);
+        return mcpProxyService.callTool(name, args);
     }
 
     private void sendError(SseEmitter emitter, String id, int code, String message) {

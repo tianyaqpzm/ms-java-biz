@@ -39,7 +39,7 @@ spring:
       maximum-pool-size: 10
   # Flyway 数据库迁移
   flyway:
-    enabled: true             # 已移至 FlywayConfig 手动控制，监听 ApplicationReadyEvent 执行
+    enabled: false             # 彻底禁用 Spring Boot 的自动抢跑，防止启动冲突, 已移至 FlywayConfig 手动控制，监听 ApplicationReadyEvent 执行
     locations: classpath:db/migration
     # --- 独立连接配置 (由 FlywayConfig 读取) ---
     # options=-c search_path=public: 这是一个关键技巧。通过在 URL 中硬编码 search_path，Flyway 驱动会认为会话状态从未被修改过，
@@ -109,5 +109,9 @@ app:
         - /v3/api-docs/**
         - /.well-known/**
         - /mcp/**
+        - /sse/**
+        - /rest/biz/v1/mcp-plugins/enabled
   knowledge:
     upload-dir: ${KNOWLEDGE_UPLOAD_DIR:/tmp/ai_knowledge_uploads}
+  flyway:
+    manual-trigger: true       # 手动触发开关，由 FlywayConfig.onApplicationReady 使用

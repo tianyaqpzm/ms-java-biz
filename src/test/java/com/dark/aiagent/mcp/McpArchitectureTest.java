@@ -8,7 +8,9 @@ import org.junit.jupiter.api.Test;
 import com.dark.aiagent.mcp.McpProtocol.JsonRpcResponse;
 import com.dark.aiagent.mcp.McpProtocol.ToolResult;
 import com.dark.aiagent.mcp.tools.OrderQueryTool;
+import com.dark.aiagent.infrastructure.mcp.McpProxyService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.mockito.Mockito.mock;
 
 /**
  * MCP 架构守护测试：策略模式验证、DTO 序列化、工具注册
@@ -22,7 +24,8 @@ class McpArchitectureTest {
         McpTool tool1 = new OrderQueryTool();
         ObjectMapper mapper = new ObjectMapper();
 
-        McpController controller = new McpController(mapper, List.of(tool1));
+        McpProxyService proxyService = mock(McpProxyService.class);
+        McpController controller = new McpController(mapper, List.of(tool1), proxyService);
         // Controller 构造成功即证明 Registry 构建成功
         assertThat(controller).isNotNull();
     }

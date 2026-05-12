@@ -32,7 +32,7 @@ public class FlywayConfig {
     @Value("${spring.flyway.password}")
     private String password;
 
-    @Value("${spring.flyway.enabled:true}")
+    @Value("${app.flyway.manual-trigger:true}")
     private boolean enabled;
 
     @Bean
