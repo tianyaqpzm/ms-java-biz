@@ -9,7 +9,9 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import com.dark.aiagent.mcp.McpProtocol.JsonRpcRequest;
 import com.dark.aiagent.mcp.McpProtocol.ToolResult;
 import com.dark.aiagent.mcp.tools.OrderQueryTool;
+import com.dark.aiagent.infrastructure.mcp.McpProxyService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.mockito.Mockito.mock;
 
 /**
  * McpController 单元测试：SSE 握手、JSON-RPC 指令分发
@@ -23,7 +25,8 @@ class McpControllerTest {
     void setUp() {
         objectMapper = new ObjectMapper();
         McpTool orderTool = new OrderQueryTool();
-        controller = new McpController(objectMapper, List.of(orderTool));
+        McpProxyService proxyService = mock(McpProxyService.class);
+        controller = new McpController(objectMapper, List.of(orderTool), proxyService);
     }
 
     // LM-01: GET /mcp/sse 返回 SSE emitter

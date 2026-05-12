@@ -45,7 +45,7 @@ class PromptControllerTest {
                 .versionTag("v1.0.0")
                 .content("Chef Prompt Content")
                 .modelConfig(new HashMap<>())
-                .variables(new HashMap<>())
+                .variables(new java.util.ArrayList<>())
                 .build();
 
         when(promptApplicationService.getActivePrompt(slug)).thenReturn(mockPrompt);

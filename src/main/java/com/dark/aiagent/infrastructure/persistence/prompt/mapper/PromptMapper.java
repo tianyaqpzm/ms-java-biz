@@ -11,4 +11,14 @@ public interface PromptMapper extends BaseMapper<PromptVersionDO> {
      * 根据 Slug 获取当前生效的 Prompt 版本 (SQL 已迁移至 XML)
      */
     PromptVersionDO findActiveBySlug(String slug);
+
+    /**
+     * 将模板下的所有版本设为失效
+     */
+    void deactivateVersionsByTemplateId(Integer templateId);
+
+    /**
+     * 激活指定版本
+     */
+    void activateVersion(Integer versionId);
 }

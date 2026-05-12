@@ -11,4 +11,12 @@
         LIMIT 1
     </select>
 
+    <update id="deactivateVersionsByTemplateId">
+        UPDATE ms_prompt_version SET is_active = FALSE WHERE template_id = #{templateId}
+    </update>
+
+    <update id="activateVersion">
+        UPDATE ms_prompt_version SET is_active = TRUE WHERE id = #{versionId}
+    </update>
+
 </mapper>

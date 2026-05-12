@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -19,7 +20,7 @@ public class Prompt {
     private String versionTag;
     private String content;
     private Map<String, Object> modelConfig;
-    private Map<String, Object> variables;
+    private List<String> variables;
 
     /**
      * 校验 Prompt 是否完整

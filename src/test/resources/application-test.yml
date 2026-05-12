@@ -13,6 +13,10 @@ spring:
     password:
   flyway:
     enabled: false
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    user: sa
+    password:
+    locations: classpath:db/migration
   data:
     mongodb:
       # uri: mongodb://localhost:27017/test
@@ -25,6 +29,10 @@ spring:
         enabled: false
       config:
         enabled: false
+
+app:
+  flyway:
+    manual-trigger: false
 
 # 禁用 LangChain4j 自动连接
 langchain4j:
