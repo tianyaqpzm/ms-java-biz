@@ -26,49 +26,44 @@ public class GlobalExceptionHandler {
     private MessageSource messageSource;
 
     @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException e, HttpServletRequest request) {
+    public ResponseEntity<?> handleBusinessException(BusinessException e, HttpServletRequest request) {
         String traceId = request.getHeader(TRACE_ID_HEADER);
         String path = request.getRequestURI();
         String errorCode = e.getErrorCode();
         
-        // 业务异常消息通常已经过处理，直接使用，或尝试从 messageSource 进一步增强
         String message = messageSource.getMessage(errorCode, null, e.getMessage(), LocaleContextHolder.getLocale());
-        
         log.warn("【业务异常】Path: {}, traceId: {}, errorCode: {}, message: {}", path, traceId, errorCode, message);
 
-        ErrorResponse error = ErrorResponse.of(
-            traceId,
-            HttpStatus.BAD_REQUEST.value(),
-            errorCode,
-            message,
-            path
-        );
+        // 如果是 SSE 请求，避免返回 JSON 对象导致转换失败
+        if (isSseRequest(request)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("error: " + message);
+        }
 
+        ErrorResponse error = ErrorResponse.of(traceId, HttpStatus.BAD_REQUEST.value(), errorCode, message, path);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleException(Exception e, HttpServletRequest request) {
+    public ResponseEntity<?> handleException(Exception e, HttpServletRequest request) {
         String traceId = request.getHeader(TRACE_ID_HEADER);
         String path = request.getRequestURI();
-        
-        // 默认错误码使用 status
         String errorCode = String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR.value());
-        
-        // 尝试国际化处理消息
         String message = messageSource.getMessage(errorCode, null, e.getMessage(), LocaleContextHolder.getLocale());
         
         log.error("【系统异常】Path: {}, traceId: {}, errorCode: {}, Reason: {}", path, traceId, errorCode, message, e);
 
-        ErrorResponse error = ErrorResponse.of(
-            traceId,
-            HttpStatus.INTERNAL_SERVER_ERROR.value(),
-            errorCode,
-            message,
-            path
-        );
+        // 如果是 SSE 请求，避免返回 JSON 对象导致转换失败
+        if (isSseRequest(request)) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("error: " + message);
+        }
 
+        ErrorResponse error = ErrorResponse.of(traceId, HttpStatus.INTERNAL_SERVER_ERROR.value(), errorCode, message, path);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+
+    private boolean isSseRequest(HttpServletRequest request) {
+        String accept = request.getHeader("Accept");
+        return (accept != null && accept.contains("text/event-stream")) || request.getRequestURI().contains("/sse");
     }
 
     /**

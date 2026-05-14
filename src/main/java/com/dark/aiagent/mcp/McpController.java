@@ -7,6 +7,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import org.springframework.http.MediaType;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -30,8 +31,8 @@ public class McpController {
     private final Map<String, McpTool> toolRegistry;
     private final com.dark.aiagent.infrastructure.mcp.McpProxyService mcpProxyService;
 
-    public McpController(ObjectMapper objectMapper, List<McpTool> tools, 
-                         com.dark.aiagent.infrastructure.mcp.McpProxyService mcpProxyService) {
+    public McpController(ObjectMapper objectMapper, List<McpTool> tools,
+            com.dark.aiagent.infrastructure.mcp.McpProxyService mcpProxyService) {
         this.mcpProxyService = mcpProxyService;
         this.toolRegistry =
                 tools.stream().collect(Collectors.toMap(McpTool::getName, tool -> tool));
@@ -65,9 +66,10 @@ public class McpController {
     }
 
     @PostMapping("/messages")
-    public Object handleMessage(@RequestParam(required = false) String sessionId, @RequestBody JsonRpcRequest request) {
+    public Object handleMessage(@RequestParam(required = false) String sessionId,
+            @RequestBody JsonRpcRequest request) {
         SseEmitter emitter = (sessionId != null) ? emitters.get(sessionId) : null;
-        
+
         try {
             Object result = null;
             log.info("收到指令: {} [Session: {}]", request.method(), sessionId);
@@ -96,8 +98,8 @@ public class McpController {
             if (emitter != null) {
                 sendError(emitter, request.id(), -32603, "Internal error: " + e.getMessage());
             } else {
-                return new JsonRpcResponse("2.0", request.id(), null, 
-                    Map.of("code", -32603, "message", "Internal error: " + e.getMessage()));
+                return new JsonRpcResponse("2.0", request.id(), null,
+                        Map.of("code", -32603, "message", "Internal error: " + e.getMessage()));
             }
         }
         return null;
@@ -112,7 +114,7 @@ public class McpController {
         List<ToolDefinition> definitions = new java.util.ArrayList<>(toolRegistry.values().stream()
                 .map(t -> new ToolDefinition(t.getName(), t.getDescription(), t.getInputSchema()))
                 .toList());
-        
+
         definitions.addAll(mcpProxyService.getDynamicTools());
         return Map.of("tools", definitions);
     }
@@ -141,5 +143,25 @@ public class McpController {
         } catch (IOException ex) {
             // ignore
         }
+    }
+
+    /**
+     * 每 15 秒发送一次心跳，维持 SSE 连接活跃。
+     */
+    @Scheduled(fixedRate = 15000)
+    public void sendHeartbeat() {
+        if (emitters.isEmpty()) {
+            return;
+        }
+
+        log.debug("发送 MCP SSE 心跳, 当前连接数: {}", emitters.size());
+        emitters.forEach((sessionId, emitter) -> {
+            try {
+                emitter.send(SseEmitter.event().comment("heartbeat"));
+            } catch (Exception e) {
+                log.warn("清理失效的 SSE 连接: {}", sessionId);
+                emitters.remove(sessionId);
+            }
+        });
     }
 }

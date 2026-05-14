@@ -15,6 +15,10 @@ management:
 # Nacos Data ID: ms-java-biz-prod.yaml (或根据 profile 变化)
 
 spring:
+  # 异步请求超时设置 (SSE 长连接必须)
+  mvc:
+    async:
+      request-timeout: 3600000  # 设置为 1 小时
   # 国际化配置
   messages:
     basename: i18n/messages
