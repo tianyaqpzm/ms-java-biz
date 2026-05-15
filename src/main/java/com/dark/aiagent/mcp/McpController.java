@@ -146,9 +146,9 @@ public class McpController {
     }
 
     /**
-     * 每 15 秒发送一次心跳，维持 SSE 连接活跃。
+     * 每 10 秒发送一次心跳，维持 SSE 连接活跃。
      */
-    @Scheduled(fixedRate = 15000)
+    @Scheduled(fixedRate = 10000)
     public void sendHeartbeat() {
         if (emitters.isEmpty()) {
             return;
