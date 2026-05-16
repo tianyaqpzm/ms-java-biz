@@ -59,7 +59,9 @@ public class McpController {
             emitter.send(SseEmitter.event().name("endpoint").data(endpointUrl));
             log.info("Client 已连接, Session: {}", sessionId);
         } catch (IOException e) {
-            emitter.completeWithError(e);
+            log.warn("发送初始 endpoint 失败 (Session: {}): {}", sessionId, e.getMessage());
+            emitter.complete();
+            emitters.remove(sessionId);
         }
 
         return emitter;
@@ -115,7 +117,8 @@ public class McpController {
                 .map(t -> new ToolDefinition(t.getName(), t.getDescription(), t.getInputSchema()))
                 .toList());
 
-        definitions.addAll(mcpProxyService.getDynamicTools());
+        // 直接连接模式：Java 端只返回自己原生的业务工具，插件工具由 Agent 直接连接，不再通过 Java 代理。
+        // definitions.addAll(mcpProxyService.getDynamicTools());
         return Map.of("tools", definitions);
     }
 

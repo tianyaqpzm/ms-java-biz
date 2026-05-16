@@ -50,6 +50,12 @@ public class GlobalExceptionHandler {
         String errorCode = String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR.value());
         String message = messageSource.getMessage(errorCode, null, e.getMessage(), LocaleContextHolder.getLocale());
         
+        // 针对 Broken pipe (SSE 断连) 进行降级处理，避免 ERROR 级别日志堆栈
+        if (e instanceof java.io.IOException && (e.getMessage().contains("Broken pipe") || e.getMessage().contains("Connection reset"))) {
+            log.warn("【连接断开】Path: {}, traceId: {}, message: {}", path, traceId, e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Connection closed");
+        }
+
         log.error("【系统异常】Path: {}, traceId: {}, errorCode: {}, Reason: {}", path, traceId, errorCode, message, e);
 
         // 如果是 SSE 请求，避免返回 JSON 对象导致转换失败

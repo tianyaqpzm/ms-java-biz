@@ -12,6 +12,9 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import com.dark.aiagent.security.JwtAuthenticationFilter;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -22,6 +25,7 @@ public class SecurityConfig {
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, IgnoreWhiteProperties ignoreWhiteProperties) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.ignoreWhiteProperties = ignoreWhiteProperties;
+        log.info("【SecurityConfig】Initialized with whitelisted URLs: {}", ignoreWhiteProperties.getUrls());
     }
 
     @Bean

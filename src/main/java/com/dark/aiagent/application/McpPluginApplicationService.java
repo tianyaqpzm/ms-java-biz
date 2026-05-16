@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -16,8 +18,11 @@ import com.dark.aiagent.infrastructure.persistence.mapper.UserPreferenceMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class McpPluginApplicationService {
@@ -28,6 +33,20 @@ public class McpPluginApplicationService {
     private final McpSchemaFetcher mcpSchemaFetcher;
 
     private static final String PREF_KEY_MCP_ENABLED = "mcp_enabled_plugins";
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void onApplicationReady() {
+        log.info("【MCP-Init】Checking enabled plugins for schema refresh at startup...");
+        List<McpPlugin> enabledPlugins = mcpPluginRepository.findAll().stream()
+                .filter(McpPlugin::isEnabled).filter(p -> p.getType().equalsIgnoreCase("sse"))
+                .collect(Collectors.toList());
+
+        for (McpPlugin plugin : enabledPlugins) {
+            log.info("【MCP-Init】Triggering schema refresh for plugin: {} ({})", plugin.getName(),
+                    plugin.getId());
+            refreshPluginSchema(plugin.getId());
+        }
+    }
 
     public List<McpPlugin> listAll(String userId) {
         List<McpPlugin> allPlugins = mcpPluginRepository.findAll();
@@ -51,10 +70,39 @@ public class McpPluginApplicationService {
     }
 
     public List<McpPlugin> listEnabled(String userId) {
-        // TODO: [FE014] 暂时绕过 X-User-Id 校验，默认返回所有全局启用的插件。待前端用户偏好功能完善后再恢复。
-        return mcpPluginRepository.findAll().stream()
-                .filter(McpPlugin::isEnabled)
+        List<McpPlugin> allEnabled = mcpPluginRepository.findAll().stream()
+                .filter(McpPlugin::isEnabled).collect(Collectors.toList());
+
+        List<String> enabledIds = getEnabledPluginIds(userId);
+
+        log.info("【MCP-Init】User: {}, allEnabled count: {}, enabledIds: {}", userId,
+                allEnabled.size(), enabledIds);
+
+        // 过滤逻辑：包含 (用户显式启用的插件) + (所有系统强制启用的插件)
+        List<McpPlugin> baseList = allEnabled.stream()
+                .filter(plugin -> plugin.isSystem() || enabledIds.isEmpty()
+                        || enabledIds.contains(plugin.getId().toString()))
                 .collect(Collectors.toList());
+
+
+
+        // 处理自发现逻辑：对于已经在列表中的 java-biz 插件，通过 Builder 创建包含动态 URL 的新对象
+        return baseList.stream().map(p -> {
+            if ("java-biz".equals(p.getName())) {
+                ObjectNode newConfig = objectMapper.createObjectNode();
+                if (p.getConfig() != null && p.getConfig().isObject()) {
+                    newConfig.setAll((ObjectNode) p.getConfig());
+                }
+                // 动态注入自发现路径
+                newConfig.put("url", "/mcp/sse");
+
+                return McpPlugin.builder().id(p.getId()).name(p.getName()).title(p.getTitle())
+                        .description(p.getDescription()).icon(p.getIcon()).type(p.getType())
+                        .config(newConfig).enabled(p.isEnabled()).system(p.isSystem())
+                        .createTime(p.getCreateTime()).updateTime(p.getUpdateTime()).build();
+            }
+            return p;
+        }).collect(Collectors.toList());
     }
 
     @Transactional
@@ -80,26 +128,19 @@ public class McpPluginApplicationService {
     public McpPlugin registerPlugin(McpPlugin plugin) {
         // Assign ID if missing
         if (plugin.getId() == null) {
-            plugin = McpPlugin.builder()
-                    .id(UUID.randomUUID())
-                    .name(plugin.getName())
-                    .title(plugin.getTitle())
-                    .description(plugin.getDescription())
-                    .icon(plugin.getIcon())
-                    .type(plugin.getType())
-                    .config(plugin.getConfig())
+            plugin = McpPlugin.builder().id(UUID.randomUUID()).name(plugin.getName())
+                    .title(plugin.getTitle()).description(plugin.getDescription())
+                    .icon(plugin.getIcon()).type(plugin.getType()).config(plugin.getConfig())
                     .enabled(true) // Enable by default for system
-                    .system(false)
-                    .createTime(OffsetDateTime.now())
-                    .updateTime(OffsetDateTime.now())
+                    .system(false).createTime(OffsetDateTime.now()).updateTime(OffsetDateTime.now())
                     .build();
         }
-        
+
         mcpPluginRepository.save(plugin);
-        
+
         // Trigger async schema refresh
         refreshPluginSchema(plugin.getId());
-        
+
         return plugin;
     }
 
@@ -110,26 +151,25 @@ public class McpPluginApplicationService {
             throw new IllegalArgumentException("Plugin not found: " + id);
         }
 
-        McpPlugin updated = McpPlugin.builder()
-                .id(id)
+        McpPlugin updated = McpPlugin.builder().id(id)
                 .name(updateReq.getName() != null ? updateReq.getName() : existing.getName())
                 .title(updateReq.getTitle() != null ? updateReq.getTitle() : existing.getTitle())
-                .description(updateReq.getDescription() != null ? updateReq.getDescription() : existing.getDescription())
+                .description(updateReq.getDescription() != null ? updateReq.getDescription()
+                        : existing.getDescription())
                 .icon(updateReq.getIcon() != null ? updateReq.getIcon() : existing.getIcon())
                 .type(updateReq.getType() != null ? updateReq.getType() : existing.getType())
-                .config(updateReq.getConfig() != null ? updateReq.getConfig() : existing.getConfig())
-                .enabled(existing.isEnabled())
-                .system(existing.isSystem())
-                .createTime(existing.getCreateTime())
-                .updateTime(OffsetDateTime.now())
-                .build();
+                .config(updateReq.getConfig() != null ? updateReq.getConfig()
+                        : existing.getConfig())
+                .enabled(existing.isEnabled()).system(existing.isSystem())
+                .createTime(existing.getCreateTime()).updateTime(OffsetDateTime.now()).build();
 
         mcpPluginRepository.save(updated);
 
         // If URL changed, refresh schema
         if (updated.getType().equalsIgnoreCase("sse") && updated.getConfig() != null) {
             String newUrl = updated.getConfig().path("url").asText();
-            String oldUrl = existing.getConfig() != null ? existing.getConfig().path("url").asText() : null;
+            String oldUrl =
+                    existing.getConfig() != null ? existing.getConfig().path("url").asText() : null;
             if (newUrl != null && !newUrl.equals(oldUrl)) {
                 refreshPluginSchema(id);
             }

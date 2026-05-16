@@ -51,7 +51,7 @@ spring:
     # --- 独立连接配置 (由 FlywayConfig 读取) ---
     # options=-c search_path=public: 这是一个关键技巧。通过在 URL 中硬编码 search_path，Flyway 驱动会认为会话状态从未被修改过，
     # 从而跳过退出时的 restoreOriginalState 逻辑，在之前的事故中，正是这个还原逻辑在 Nacos 刷新或 PgBouncer 环境下触发了 EOFException 导致启动失败
-    url: ${SPRING_FLYWAY_URL:jdbc:postgresql://tao-lan.122577.xyz:5432/postgres?prepareThreshold=0&tcpKeepAlive=true&connectTimeout=30&socketTimeout=0&options=-c%20statement_timeout=0%20-c%20search_path=public&reWriteBatchedInserts=true}
+    url: ${SPRING_FLYWAY_URL:jdbc:postgresql://localhost:5432/postgres?prepareThreshold=0&tcpKeepAlive=true&connectTimeout=30&socketTimeout=0&options=-c%20statement_timeout=0%20-c%20search_path=public&reWriteBatchedInserts=true}
     user: ${spring.datasource.username}
     password: ${spring.datasource.password}
     driver-class-name: org.postgresql.Driver
