@@ -1,5 +1,8 @@
 server:
   port: ${PORT:8080}
+  tomcat:
+    keep-alive-timeout: 120000   # 延长至 120s，为 VPN 抖动提供更大缓冲
+    max-keep-alive-requests: -1  # SSE 流需要无限请求支持，防止连接被强制回收
 # http://localhost:8080/doc.html
 logging:
   level:
@@ -15,6 +18,10 @@ management:
 # Nacos Data ID: ms-java-biz-prod.yaml (或根据 profile 变化)
 
 spring:
+  # 异步请求超时设置 (SSE 长连接必须)
+  mvc:
+    async:
+      request-timeout: 3600000  # 设置为 1 小时
   # 国际化配置
   messages:
     basename: i18n/messages
@@ -31,11 +38,11 @@ spring:
     username: ${PG_USER:postgres}
     password: ${PG_PWD:postgres}
     hikari:
-      keepalive-time: 30000     # 30秒发一次心跳保活
-      max-lifetime: 600000     # 缩短为 10 分钟，解决 Failed to validate connection 告警
+      keepalive-time: 30000     # 恢复至 30秒（Hikari 要求的最小值），确保保活机制生效
+      max-lifetime: 240000      # 进一步缩短至 4 分钟，防止连接在失效后仍被留在池中
       connection-timeout: 30000 # 连接超时
-      idle-timeout: 60000       # 空闲超时
-      minimum-idle: 1
+      idle-timeout: 30000       # 空闲超时
+      minimum-idle: 0
       maximum-pool-size: 10
   # Flyway 数据库迁移
   flyway:
@@ -44,7 +51,7 @@ spring:
     # --- 独立连接配置 (由 FlywayConfig 读取) ---
     # options=-c search_path=public: 这是一个关键技巧。通过在 URL 中硬编码 search_path，Flyway 驱动会认为会话状态从未被修改过，
     # 从而跳过退出时的 restoreOriginalState 逻辑，在之前的事故中，正是这个还原逻辑在 Nacos 刷新或 PgBouncer 环境下触发了 EOFException 导致启动失败
-    url: ${SPRING_FLYWAY_URL:jdbc:postgresql://tao-lan.122577.xyz:5432/postgres?prepareThreshold=0&tcpKeepAlive=true&connectTimeout=30&socketTimeout=0&options=-c%20statement_timeout=0%20-c%20search_path=public&reWriteBatchedInserts=true}
+    url: ${SPRING_FLYWAY_URL:jdbc:postgresql://localhost:5432/postgres?prepareThreshold=0&tcpKeepAlive=true&connectTimeout=30&socketTimeout=0&options=-c%20statement_timeout=0%20-c%20search_path=public&reWriteBatchedInserts=true}
     user: ${spring.datasource.username}
     password: ${spring.datasource.password}
     driver-class-name: org.postgresql.Driver

@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
@@ -28,7 +29,10 @@ public class McpProxyService {
     private final McpToolCacheMapper toolCacheMapper;
     private final McpPluginRepository pluginRepository;
     private final ObjectMapper objectMapper;
-    private final WebClient vanillaWebClient;
+    private final WebClient.Builder vanillaWebClientBuilder;
+
+    @org.springframework.beans.factory.annotation.Value("${server.port:8080}")
+    private int serverPort;
 
     public McpProxyService(McpToolCacheMapper toolCacheMapper, McpPluginRepository pluginRepository,
             ObjectMapper objectMapper,
@@ -36,8 +40,7 @@ public class McpProxyService {
         this.toolCacheMapper = toolCacheMapper;
         this.pluginRepository = pluginRepository;
         this.objectMapper = objectMapper;
-        // 构建一个基础客户端，后续通过 .mutate() 复制配置
-        this.vanillaWebClient = webClientBuilder.build();
+        this.vanillaWebClientBuilder = webClientBuilder;
     }
 
     public List<McpProtocol.ToolDefinition> getDynamicTools() {
@@ -78,17 +81,27 @@ public class McpProxyService {
 
     private Mono<McpProtocol.ToolResult> executeRemoteCall(String sseUrl, String toolName,
             JsonNode arguments) {
-        WebClient client = vanillaWebClient.mutate().baseUrl(sseUrl).build();
+        String finalSseUrl = sseUrl;
+        if (sseUrl.startsWith("/")) {
+            finalSseUrl = "http://localhost:" + serverPort + sseUrl;
+        }
+        
+        final String effectiveSseUrl = finalSseUrl;
+        WebClient client = vanillaWebClientBuilder.clone().baseUrl(effectiveSseUrl).build();
         AtomicReference<String> messageEndpoint = new AtomicReference<>();
 
         return client.get().accept(MediaType.TEXT_EVENT_STREAM).retrieve()
-                .bodyToFlux(ServerSentEvent.class).timeout(Duration.ofSeconds(10))
+                .bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {}).timeout(Duration.ofSeconds(10))
                 .takeUntil(event -> "endpoint".equals(event.event())).doOnNext(event -> {
                     if ("endpoint".equals(event.event()) && event.data() != null) {
                         String url = event.data().toString();
                         if (!url.startsWith("http")) {
-                            String base = sseUrl.substring(0, sseUrl.lastIndexOf("/"));
-                            url = base + (url.startsWith("/") ? "" : "/") + url;
+                            try {
+                                java.net.URI baseUri = new java.net.URI(effectiveSseUrl);
+                                url = baseUri.resolve(url).toString();
+                            } catch (Exception e) {
+                                log.error("Failed to resolve endpoint URL: {}", url, e);
+                            }
                         }
                         messageEndpoint.set(url);
                     }
@@ -102,7 +115,7 @@ public class McpProxyService {
                                     "tools/call", objectMapper.createObjectNode()
                                             .put("name", toolName).set("arguments", arguments));
 
-                    return vanillaWebClient.mutate().build().post().uri(messageEndpoint.get())
+                    return vanillaWebClientBuilder.clone().build().post().uri(messageEndpoint.get())
                             .bodyValue(callReq).retrieve().bodyToMono(JsonNode.class).map(res -> {
                                 JsonNode resultNode = res.path("result");
                                 return objectMapper.convertValue(resultNode,

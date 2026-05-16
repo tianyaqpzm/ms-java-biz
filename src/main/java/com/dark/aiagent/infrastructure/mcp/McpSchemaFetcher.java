@@ -27,6 +27,9 @@ public class McpSchemaFetcher {
     private final WebClient.Builder vanillaWebClientBuilder;
     private final ObjectMapper objectMapper;
 
+    @org.springframework.beans.factory.annotation.Value("${server.port:8080}")
+    private int serverPort;
+
     public McpSchemaFetcher(McpToolCacheMapper toolCacheMapper,
             @Qualifier("vanillaWebClientBuilder") WebClient.Builder vanillaWebClientBuilder,
             ObjectMapper objectMapper) {
@@ -36,8 +39,14 @@ public class McpSchemaFetcher {
     }
 
     public void fetchAndCache(UUID serverId, String sseUrl) {
-        log.info("Starting asynchronous schema fetch for server {} at {}", serverId, sseUrl);
-        WebClient client = vanillaWebClientBuilder.baseUrl(sseUrl).build();
+        String finalUrl = sseUrl;
+        if (sseUrl.startsWith("/")) {
+            finalUrl = "http://localhost:" + serverPort + sseUrl;
+        }
+        log.info("Starting asynchronous schema fetch for server {} at {}", serverId, finalUrl);
+        
+        // 使用 clone() 避免污染单例 builder 的状态
+        WebClient client = vanillaWebClientBuilder.clone().baseUrl(finalUrl).build();
 
         AtomicReference<String> messageEndpoint = new AtomicReference<>();
 
@@ -90,12 +99,18 @@ public class McpSchemaFetcher {
 
     private String resolveUrl(String baseUrl, String data) {
         if (data.startsWith("http")) return data;
-        String base = baseUrl.substring(0, baseUrl.lastIndexOf("/"));
-        return base + (data.startsWith("/") ? "" : "/") + data;
+        try {
+            java.net.URI baseUri = new java.net.URI(baseUrl);
+            return baseUri.resolve(data).toString();
+        } catch (Exception e) {
+            log.error("Failed to resolve URL: base={}, data={}", baseUrl, data);
+            return data;
+        }
     }
 
     private Mono<Void> sendPostRequest(String url, Object body) {
-        return vanillaWebClientBuilder.build().post()
+        // 使用克隆的 builder 确保不受 baseUrl 污染
+        return vanillaWebClientBuilder.clone().build().post()
                 .uri(url)
                 .bodyValue(body)
                 .retrieve()
